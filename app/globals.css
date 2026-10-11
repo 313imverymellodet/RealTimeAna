@@ -60,11 +60,13 @@
   --border: oklch(0.22 0.005 250);
   --input: oklch(0.22 0.005 250);
   --ring: oklch(0.55 0.15 250);
-  --chart-1: oklch(0.65 0.2 250);
+  --chart-1: oklch(0.84 0.17 158);
   --chart-2: oklch(0.7 0.18 160);
   --chart-3: oklch(0.75 0.15 45);
   --chart-4: oklch(0.65 0.2 330);
   --chart-5: oklch(0.6 0.15 200);
+  --brand: oklch(0.84 0.17 158);
+  --brand-foreground: oklch(0.16 0.03 160);
   --success: oklch(0.65 0.2 145);
   --warning: oklch(0.75 0.18 70);
   --sidebar: oklch(0.13 0.005 250);
@@ -78,9 +80,11 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-sans, "Manrope"), "Manrope Fallback", system-ui, sans-serif;
-  --font-heading: var(--font-heading, "Plus Jakarta Sans"), "Plus Jakarta Sans Fallback", system-ui, sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-heading: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -142,5 +146,32 @@
   }
   h2 {
     letter-spacing: -0.035em;
+  }
+}
+
+@layer utilities {
+  /* Faint grid that fades out toward the edges; used behind hero sections */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, oklch(1 0 0 / 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(1 0 0 / 0.045) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 100%);
+  }
+  .glow-brand {
+    background: radial-gradient(ellipse 50% 40% at 50% 0%, oklch(0.84 0.17 158 / 0.16), transparent 70%);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

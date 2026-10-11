@@ -1,202 +1,178 @@
-import { createClient } from "@supabase/supabase-js"
+import { randomUUID } from "node:crypto"
+import { and, desc, eq, gte, sql } from "drizzle-orm"
 import { type NextRequest, NextResponse } from "next/server"
-import { getPlanLimits } from "@/lib/pricing"
+import { getDb, schema } from "@/lib/db"
+import { getClientIp, lookupGeo } from "@/lib/geo"
+import { getPlan } from "@/lib/plans"
+import { isRateLimited } from "@/lib/rate-limit"
+import { isUuid, normalizeDomain } from "@/lib/sites"
+import { getVisitorId, isBot, parseUserAgent } from "@/lib/visitor"
 
-// Use service role key for public tracking endpoint (bypasses RLS)
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const MAX_URL_LENGTH = 2048
+const MAX_EVENTS_PER_MINUTE = 120
+const SESSION_WINDOW_MS = 30 * 60 * 1000
 
-function corsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  }
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
 }
 
-// Simple geo lookup using request headers (Vercel provides these)
-function getGeoData(request: NextRequest) {
-  return {
-    country: request.headers.get("x-vercel-ip-country") || null,
-    city: request.headers.get("x-vercel-ip-city") || null,
-    latitude: request.headers.get("x-vercel-ip-latitude")
-      ? Number.parseFloat(request.headers.get("x-vercel-ip-latitude")!)
-      : null,
-    longitude: request.headers.get("x-vercel-ip-longitude")
-      ? Number.parseFloat(request.headers.get("x-vercel-ip-longitude")!)
-      : null,
-  }
+function json(body: unknown, status = 200) {
+  return NextResponse.json(body, { status, headers: CORS_HEADERS })
 }
 
-// Parse user agent for device/browser/os info
-function parseUserAgent(userAgent: string) {
-  const ua = userAgent.toLowerCase()
-
-  let device = "desktop"
-  if (/mobile|android|iphone|ipad|tablet/i.test(ua)) {
-    device = /tablet|ipad/i.test(ua) ? "tablet" : "mobile"
+// Only accept events sent by a browser from the tracked site (or a subdomain of it)
+function originMatchesSite(origin: string | null, siteDomain: string) {
+  if (!origin) return false
+  let originHost: string
+  try {
+    originHost = normalizeDomain(new URL(origin).hostname)
+  } catch {
+    return false
   }
+  return originHost === siteDomain || originHost.endsWith(`.${siteDomain}`)
+}
 
-  let browser = "other"
-  if (ua.includes("chrome") && !ua.includes("edg")) browser = "Chrome"
-  else if (ua.includes("safari") && !ua.includes("chrome")) browser = "Safari"
-  else if (ua.includes("firefox")) browser = "Firefox"
-  else if (ua.includes("edg")) browser = "Edge"
+function shortText(value: unknown, max = 200) {
+  return typeof value === "string" && value.length > 0 ? value.slice(0, max) : null
+}
 
-  let os = "other"
-  if (ua.includes("windows")) os = "Windows"
-  else if (ua.includes("mac")) os = "macOS"
-  else if (ua.includes("linux")) os = "Linux"
-  else if (ua.includes("android")) os = "Android"
-  else if (ua.includes("iphone") || ua.includes("ipad")) os = "iOS"
-
-  return { device, browser, os }
+// Keep only the referring hostname, and drop visits that came from the site itself
+function referrerHost(value: unknown, siteDomain: string) {
+  if (typeof value !== "string" || !value) return null
+  try {
+    const host = normalizeDomain(new URL(value).hostname)
+    if (!host || host === siteDomain || host.endsWith(`.${siteDomain}`)) return null
+    return host.slice(0, 253)
+  } catch {
+    return null
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const {
-      type,
-      siteId,
-      visitorId,
-      sessionId,
-      path,
-      referrer,
-      screenWidth,
-      screenHeight,
-      userAgent,
-      duration,
-      webVitals,
-    } = body
+    // The tracker sends text/plain so browsers skip the CORS preflight
+    const body = await request
+      .text()
+      .then((text) => JSON.parse(text))
+      .catch(() => null)
 
-    if (!siteId || !visitorId || !sessionId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400, headers: corsHeaders() })
+    if (!body || typeof body !== "object") {
+      return json({ error: "Invalid payload" }, 400)
     }
 
-    // Verify site exists and get user info
-    const { data: site } = await supabase
-      .from("sites")
-      .select("id, user_id")
-      .eq("id", siteId)
-      .single()
+    const { type, siteId, id, path } = body
+
+    if (
+      (type !== "pageview" && type !== "duration") ||
+      !isUuid(siteId) ||
+      !isUuid(id) ||
+      typeof path !== "string" ||
+      !path.startsWith("/") ||
+      path.length > MAX_URL_LENGTH
+    ) {
+      return json({ error: "Invalid payload" }, 400)
+    }
+
+    const userAgent = request.headers.get("user-agent") || ""
+    if (isBot(userAgent)) {
+      return json({ success: false, reason: "bot" }, 202)
+    }
+
+    const ip = getClientIp(request.headers)
+    if (isRateLimited(`${siteId}:${ip || "unknown"}`, MAX_EVENTS_PER_MINUTE)) {
+      return json({ error: "Too many requests" }, 429)
+    }
+
+    const db = getDb()
+
+    const [site] = await db
+      .select({ id: schema.sites.id, userId: schema.sites.userId, domain: schema.sites.domain })
+      .from(schema.sites)
+      .where(eq(schema.sites.id, siteId))
+      .limit(1)
 
     if (!site) {
-      return NextResponse.json({ error: "Site not found" }, { status: 404, headers: corsHeaders() })
+      return json({ error: "Site not found" }, 404)
     }
 
-    // Check plan limits
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("plan, pageviews_this_month")
-      .eq("user_id", site.user_id)
-      .single()
+    if (!originMatchesSite(request.headers.get("origin"), site.domain)) {
+      return json({ error: "Origin not allowed for this site" }, 403)
+    }
 
-    if (profile) {
-      const { pageviewLimit } = getPlanLimits(profile.plan || "free")
-      if (profile.pageviews_this_month >= pageviewLimit) {
-        // Plan limit exceeded - drop tracking (silently for production)
-        return NextResponse.json({ success: false, reason: "plan_limit_exceeded" }, { headers: corsHeaders() })
+    if (type === "duration") {
+      const seconds = Number(body.duration)
+      if (Number.isFinite(seconds) && seconds >= 0) {
+        await db
+          .update(schema.pageViews)
+          .set({ duration: Math.min(Math.round(seconds), 86_400) })
+          .where(and(eq(schema.pageViews.id, id), eq(schema.pageViews.siteId, siteId)))
       }
+      return json({ success: true })
     }
 
-    const geo = getGeoData(request)
-    const deviceInfo = parseUserAgent(userAgent || "")
-
-    if (type === "pageview") {
-      // Insert page view
-      const { error: pvError } = await supabase.from("page_views").insert({
-        site_id: siteId,
-        visitor_id: visitorId,
-        session_id: sessionId,
-        path: path,
-        referrer: referrer,
-        country: geo.country,
-        city: geo.city,
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-        device: deviceInfo.device,
-        browser: deviceInfo.browser,
-        os: deviceInfo.os,
-        screen_width: screenWidth,
-        screen_height: screenHeight,
+    // Count the pageview against the owner's monthly allowance (resets each UTC month)
+    const [usage] = await db
+      .insert(schema.usage)
+      .values({ userId: site.userId, pageviews: 1 })
+      .onConflictDoUpdate({
+        target: schema.usage.userId,
+        set: {
+          pageviews: sql`case when ${schema.usage.periodStart} < date_trunc('month', now()) then 1 else ${schema.usage.pageviews} + 1 end`,
+          periodStart: sql`case when ${schema.usage.periodStart} < date_trunc('month', now()) then now() else ${schema.usage.periodStart} end`,
+        },
       })
+      .returning({ pageviews: schema.usage.pageviews, plan: schema.usage.plan })
 
-      if (pvError) {
-        console.error("Page view insert error:", pvError)
-      }
-
-      // Check if session exists
-      const { data: existingSession } = await supabase
-        .from("sessions")
-        .select("id, page_count")
-        .eq("session_id", sessionId)
-        .single()
-
-      if (existingSession) {
-        // Update existing session
-        await supabase
-          .from("sessions")
-          .update({
-            page_count: existingSession.page_count + 1,
-            bounced: false,
-          })
-          .eq("session_id", sessionId)
-      } else {
-        // Create new session
-        const { error: sessionError } = await supabase.from("sessions").insert({
-          site_id: siteId,
-          visitor_id: visitorId,
-          session_id: sessionId,
-          page_count: 1,
-          bounced: true,
-        })
-
-        if (sessionError) {
-          console.error("Session insert error:", sessionError)
-        }
-
-        // Increment user's pageview counter for the month
-        if (profile) {
-          await supabase
-            .from("profiles")
-            .update({
-              pageviews_this_month: (profile.pageviews_this_month || 0) + 1,
-            })
-            .eq("user_id", site.user_id)
-        }
-      }
-    } else if (type === "duration") {
-      // Update page view with duration and web vitals
-      await supabase
-        .from("page_views")
-        .update({
-          duration: duration,
-          lcp: webVitals?.lcp,
-          fcp: webVitals?.fcp,
-          cls: webVitals?.cls,
-          inp: webVitals?.inp,
-          ttfb: webVitals?.ttfb,
-        })
-        .eq("session_id", sessionId)
-        .eq("path", path)
-        .order("created_at", { ascending: false })
-        .limit(1)
-
-      // Update session end time
-      await supabase.from("sessions").update({ ended_at: new Date().toISOString() }).eq("session_id", sessionId)
+    if (usage.pageviews > getPlan(usage.plan).pageviewLimit) {
+      return json({ success: false, reason: "plan_limit_exceeded" })
     }
 
-    return NextResponse.json({ success: true }, { headers: corsHeaders() })
+    const visitorId = await getVisitorId(siteId, ip, userAgent)
+
+    // Continue the visitor's session if they were active in the last 30 minutes
+    const [recent] = await db
+      .select({ sessionId: schema.pageViews.sessionId })
+      .from(schema.pageViews)
+      .where(
+        and(
+          eq(schema.pageViews.siteId, siteId),
+          eq(schema.pageViews.visitorId, visitorId),
+          gte(schema.pageViews.createdAt, new Date(Date.now() - SESSION_WINDOW_MS)),
+        ),
+      )
+      .orderBy(desc(schema.pageViews.createdAt))
+      .limit(1)
+
+    const geo = lookupGeo(request.headers, ip)
+    const agent = parseUserAgent(userAgent)
+
+    await db
+      .insert(schema.pageViews)
+      .values({
+        id,
+        siteId,
+        visitorId,
+        sessionId: recent?.sessionId ?? randomUUID(),
+        path,
+        referrer: referrerHost(body.referrer, site.domain),
+        utmSource: shortText(body.utmSource),
+        utmMedium: shortText(body.utmMedium),
+        utmCampaign: shortText(body.utmCampaign),
+        ...geo,
+        ...agent,
+      })
+      .onConflictDoNothing()
+
+    return json({ success: true })
   } catch (error) {
     console.error("Tracking error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500, headers: corsHeaders() })
+    return json({ error: "Internal server error" }, 500)
   }
 }
 
-// Handle CORS preflight
 export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 200,
-    headers: corsHeaders(),
-  })
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
 }

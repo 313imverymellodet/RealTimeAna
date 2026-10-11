@@ -1,22 +1,29 @@
+import { eq } from "drizzle-orm"
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { SettingsClient } from "@/components/dashboard/settings-client"
+import { SettingsView } from "@/components/dashboard/settings-view"
+import { getSessionUser } from "@/lib/auth"
+import { getDb, schema } from "@/lib/db"
+import { getPlan } from "@/lib/plans"
+import { listSites } from "@/lib/sites"
 
 export default async function SettingsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getSessionUser()
+  if (!user) redirect("/auth/login")
 
-  if (!user) {
-    redirect("/auth/login")
-  }
+  const [sites, [usage]] = await Promise.all([
+    listSites(user.id),
+    getDb().select().from(schema.usage).where(eq(schema.usage.userId, user.id)),
+  ])
 
-  const { data: sites } = await supabase
-    .from("sites")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+  const plan = getPlan(usage?.plan)
+  const monthStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1))
+  const used = usage && usage.periodStart >= monthStart ? usage.pageviews : 0
 
-  return <SettingsClient user={user} sites={sites || []} />
+  return (
+    <SettingsView
+      email={user.email}
+      sites={sites.map(({ id, name, domain, publicToken }) => ({ id, name, domain, publicToken }))}
+      plan={{ name: plan.name, pageviewLimit: plan.pageviewLimit, siteLimit: plan.siteLimit, used }}
+    />
+  )
 }

@@ -1,36 +1,41 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Plus_Jakarta_Sans, Manrope } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
+import type { Metadata, Viewport } from "next"
+import { Geist, Geist_Mono } from "next/font/google"
+import { Toaster } from "sonner"
 import "./globals.css"
 
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-heading",
-  display: "swap",
-})
+const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display: "swap" })
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" })
 
-const manrope = Manrope({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-})
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
 
 export const metadata: Metadata = {
-  title: "Pulse Analytics - Real-time Web Analytics",
-  description: "Fast, private, real-time web analytics. Understand your visitors without compromising their privacy.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Pulse: live web analytics without cookies",
+    template: "%s · Pulse",
+  },
+  description:
+    "See who is on your site right now. Live web analytics with one script tag, no cookies and nothing stored in your visitors' browsers.",
+  openGraph: {
+    type: "website",
+    siteName: "Pulse",
+    title: "Pulse: live web analytics without cookies",
+    description: "See who is on your site right now. One script tag, no cookies.",
+  },
+  twitter: { card: "summary_large_image" },
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export const viewport: Viewport = {
+  themeColor: "#0b0c0e",
+  colorScheme: "dark",
+}
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${plusJakarta.variable} ${manrope.variable} font-sans antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         {children}
-        <Analytics />
+        <Toaster theme="dark" />
       </body>
     </html>
   )

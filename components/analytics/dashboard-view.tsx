@@ -1,0 +1,446 @@
+"use client"
+
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { ArrowDownRight, ArrowUpRight } from "lucide-react"
+import { LiveDot } from "@/components/brand"
+import { Globe } from "@/components/globe"
+import { countryFlag, countryName, formatDuration, formatNumber, percentChange } from "@/lib/format"
+import type { BreakdownRow, RangeKey, Realtime, Stats } from "@/lib/stats"
+import { cn } from "@/lib/utils"
+
+const RANGE_OPTIONS: { value: RangeKey; label: string }[] = [
+  { value: "today", label: "Today" },
+  { value: "7d", label: "7D" },
+  { value: "30d", label: "30D" },
+  { value: "90d", label: "90D" },
+]
+
+type Metric = "visitors" | "pageviews"
+
+interface DashboardViewProps {
+  title: string
+  subtitle?: string
+  statsUrl: string
+  realtimeUrl: string
+  // Shown in place of the charts while the site has never received a page view
+  emptyState?: ReactNode
+  headerExtra?: ReactNode
+}
+
+// Polls a JSON endpoint. Keeps the last good value on screen while refreshing.
+// `nextDelay` picks the wait before the next request from the latest data.
+function usePolling<T>(url: string, nextDelay: (data: T | null) => number) {
+  const [state, setState] = useState<{ url: string; data: T | null; failed: boolean }>({
+    url,
+    data: null,
+    failed: false,
+  })
+  const delayRef = useRef(nextDelay)
+
+  useEffect(() => {
+    delayRef.current = nextDelay
+  }, [nextDelay])
+
+  useEffect(() => {
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout>
+
+    let loaded = false
+
+    const load = async () => {
+      let data: T | null = null
+      // Always make the first request; after that, skip refreshes while the tab is in the background
+      if (!loaded || document.visibilityState === "visible") {
+        try {
+          const response = await fetch(url, { cache: "no-store" })
+          if (!response.ok) throw new Error(String(response.status))
+          data = (await response.json()) as T
+          loaded = true
+          if (!cancelled) setState({ url, data, failed: false })
+        } catch {
+          if (!cancelled) setState((prev) => ({ url, data: prev.url === url ? prev.data : null, failed: true }))
+        }
+      }
+      if (!cancelled) timer = setTimeout(load, delayRef.current(data))
+    }
+
+    load()
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [url])
+
+  // Data fetched for a different URL (e.g. the previous range) is stale
+  const current = state.url === url ? state : { data: null, failed: false }
+  return { data: current.data, failed: current.failed, loading: current.data === null && !current.failed }
+}
+
+// Check every few seconds until the first page view arrives, then once a minute
+const statsDelay = (stats: Stats | null) => (stats && !stats.hasData ? 4_000 : 60_000)
+const realtimeDelay = () => 10_000
+
+function Panel({ title, action, children, className }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <section className={cn("rounded-2xl border border-border bg-card/60", className)}>
+      <header className="flex h-12 items-center justify-between gap-3 border-b border-border/70 px-4">
+        <h2 className="text-sm font-medium">{title}</h2>
+        {action}
+      </header>
+      <div className="p-2">{children}</div>
+    </section>
+  )
+}
+
+function Segmented<T extends string>({
+  value,
+  onChange,
+  options,
+  label,
+}: {
+  value: T
+  onChange: (value: T) => void
+  options: { value: T; label: string }[]
+  label: string
+}) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex rounded-lg border border-border bg-background p-0.5">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          onClick={() => onChange(option.value)}
+          className={cn(
+            "rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring",
+            value === option.value && "bg-secondary text-foreground",
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function BarList({
+  rows,
+  loading,
+  empty,
+  renderLabel,
+}: {
+  rows: BreakdownRow[] | undefined
+  loading: boolean
+  empty: string
+  renderLabel?: (label: string) => ReactNode
+}) {
+  if (loading) {
+    return (
+      <div className="space-y-1.5 p-2" aria-hidden>
+        {[80, 62, 45, 30].map((width) => (
+          <div key={width} className="h-8 animate-pulse rounded-md bg-muted/60" style={{ width: `${width}%` }} />
+        ))}
+      </div>
+    )
+  }
+
+  if (!rows || rows.length === 0) {
+    return <p className="px-2 py-8 text-center text-sm text-muted-foreground">{empty}</p>
+  }
+
+  const max = Math.max(...rows.map((row) => row.visitors), 1)
+
+  return (
+    <ul className="space-y-1">
+      {rows.map((row) => (
+        <li key={row.label} className="relative flex h-8 items-center justify-between gap-4 overflow-hidden rounded-md px-2 text-sm">
+          <span
+            aria-hidden
+            className="absolute inset-y-0 left-0 rounded-md bg-brand/12"
+            style={{ width: `${Math.max((row.visitors / max) * 100, 2)}%` }}
+          />
+          <span className="relative min-w-0 truncate">{renderLabel ? renderLabel(row.label) : row.label}</span>
+          <span className="tabular relative shrink-0 font-mono text-xs text-muted-foreground">
+            {formatNumber(row.visitors)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function StatTile({
+  label,
+  value,
+  change,
+  // For bounce rate a drop is the good direction
+  invert = false,
+  loading,
+  selected,
+  onSelect,
+}: {
+  label: string
+  value: string
+  change: number | null
+  invert?: boolean
+  loading: boolean
+  selected?: boolean
+  onSelect?: () => void
+}) {
+  const good = change !== null && (invert ? change < 0 : change > 0)
+  const content = (
+    <>
+      <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+        {onSelect && <span className={cn("size-1.5 rounded-full", selected ? "bg-brand" : "bg-border")} />}
+        {label}
+      </span>
+      <span className="tabular mt-2 block text-2xl font-semibold tracking-tight sm:text-3xl">
+        {loading ? <span className="inline-block h-7 w-20 animate-pulse rounded bg-muted/60 align-middle" /> : value}
+      </span>
+      <span
+        className={cn(
+          "tabular mt-1 flex h-4 items-center gap-0.5 text-xs font-medium",
+          change === null || change === 0 ? "text-muted-foreground" : good ? "text-brand" : "text-red-400",
+        )}
+      >
+        {!loading && change !== null && change !== 0 && (
+          <>
+            {change > 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
+            {Math.abs(change)}%<span className="ml-1 font-normal text-muted-foreground">vs previous</span>
+          </>
+        )}
+      </span>
+    </>
+  )
+
+  const className = cn(
+    "rounded-2xl border bg-card/60 p-4 text-left transition-colors",
+    selected ? "border-brand/50" : "border-border",
+  )
+
+  return onSelect ? (
+    <button type="button" onClick={onSelect} aria-pressed={selected} className={cn(className, "hover:border-brand/40 focus-visible:outline-2 focus-visible:outline-ring")}>
+      {content}
+    </button>
+  ) : (
+    <div className={className}>{content}</div>
+  )
+}
+
+function formatTick(t: string, unit: Stats["unit"]) {
+  const date = new Date(t)
+  return unit === "hour"
+    ? date.toLocaleTimeString("en", { hour: "numeric" })
+    : date.toLocaleDateString("en", { month: "short", day: "numeric" })
+}
+
+export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptyState, headerExtra }: DashboardViewProps) {
+  const [range, setRange] = useState<RangeKey>("7d")
+  const [metric, setMetric] = useState<Metric>("visitors")
+  const [deviceTab, setDeviceTab] = useState<"devices" | "browsers" | "systems">("devices")
+
+  const statsQuery = useMemo(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    return `${statsUrl}?range=${range}&tz=${encodeURIComponent(tz)}`
+  }, [statsUrl, range])
+
+  const { data: stats, loading, failed } = usePolling<Stats>(statsQuery, statsDelay)
+  const { data: realtime } = usePolling<Realtime>(realtimeUrl, realtimeDelay)
+
+  const online = realtime?.visitors ?? 0
+  const showEmpty = Boolean(emptyState) && stats !== null && !stats.hasData
+
+  return (
+    <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-6 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-semibold tracking-tight">{title}</h1>
+          {subtitle && <p className="truncate text-sm text-muted-foreground">{subtitle}</p>}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs font-medium">
+            <LiveDot />
+            <span className="tabular">{formatNumber(online)}</span>
+            <span className="text-muted-foreground">online now</span>
+          </span>
+          {headerExtra}
+          <Segmented value={range} onChange={setRange} options={RANGE_OPTIONS} label="Date range" />
+        </div>
+      </div>
+
+      {failed && !stats && (
+        <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          Could not load analytics. Retrying automatically.
+        </p>
+      )}
+
+      {showEmpty ? (
+        emptyState
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatTile
+              label="Visitors"
+              value={formatNumber(stats?.totals.visitors ?? 0)}
+              change={stats ? percentChange(stats.totals.visitors, stats.previous.visitors) : null}
+              loading={loading}
+              selected={metric === "visitors"}
+              onSelect={() => setMetric("visitors")}
+            />
+            <StatTile
+              label="Pageviews"
+              value={formatNumber(stats?.totals.pageviews ?? 0)}
+              change={stats ? percentChange(stats.totals.pageviews, stats.previous.pageviews) : null}
+              loading={loading}
+              selected={metric === "pageviews"}
+              onSelect={() => setMetric("pageviews")}
+            />
+            <StatTile
+              label="Bounce rate"
+              value={`${stats?.totals.bounceRate ?? 0}%`}
+              change={stats ? percentChange(stats.totals.bounceRate, stats.previous.bounceRate) : null}
+              invert
+              loading={loading}
+            />
+            <StatTile
+              label="Visit duration"
+              value={formatDuration(stats?.totals.avgDuration ?? 0)}
+              change={stats ? percentChange(stats.totals.avgDuration, stats.previous.avgDuration) : null}
+              loading={loading}
+            />
+          </div>
+
+          <section className="rounded-2xl border border-border bg-card/60 p-4" aria-label={`${metric} over time`}>
+            <div className="h-64 sm:h-72">
+              {stats ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={stats.series} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="metricFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="var(--brand)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="t"
+                      tickFormatter={(t: string) => formatTick(t, stats.unit)}
+                      axisLine={false}
+                      tickLine={false}
+                      minTickGap={32}
+                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(value: number) => formatNumber(value)}
+                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    />
+                    <Tooltip
+                      cursor={{ stroke: "var(--border)" }}
+                      labelFormatter={(t) => formatTick(String(t), stats.unit)}
+                      formatter={(value) => [Number(value).toLocaleString("en"), metric === "visitors" ? "Visitors" : "Pageviews"]}
+                      contentStyle={{
+                        background: "var(--popover)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 12,
+                        fontSize: 12,
+                      }}
+                      labelStyle={{ color: "var(--muted-foreground)", marginBottom: 4 }}
+                      itemStyle={{ color: "var(--foreground)" }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey={metric}
+                      stroke="var(--brand)"
+                      strokeWidth={2}
+                      fill="url(#metricFill)"
+                      dot={false}
+                      activeDot={{ r: 4, strokeWidth: 0, fill: "var(--brand)" }}
+                      isAnimationActive={false}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="size-full animate-pulse rounded-xl bg-muted/40" aria-hidden />
+              )}
+            </div>
+          </section>
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            <Panel title="Top pages">
+              <BarList
+                rows={stats?.pages}
+                loading={loading}
+                empty="No page views in this period"
+                renderLabel={(label) => <span className="font-mono text-[13px]">{label}</span>}
+              />
+            </Panel>
+
+            <Panel title="Sources">
+              <BarList rows={stats?.referrers} loading={loading} empty="No visits in this period" />
+            </Panel>
+
+            <Panel title="Live visitors" className="overflow-hidden">
+              <div className="grid items-center gap-2 sm:grid-cols-2">
+                <Globe points={realtime?.points ?? []} className="mx-auto max-w-[280px]" />
+                <div className="p-2">
+                  <p className="tabular text-4xl font-semibold tracking-tight">{formatNumber(online)}</p>
+                  <p className="text-sm text-muted-foreground">visitors in the last 5 minutes</p>
+                  <ul className="mt-4 space-y-1.5">
+                    {(realtime?.pages ?? []).map((page) => (
+                      <li key={page.label} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="min-w-0 truncate font-mono text-[13px]">{page.label}</span>
+                        <span className="tabular shrink-0 font-mono text-xs text-muted-foreground">{page.visitors}</span>
+                      </li>
+                    ))}
+                    {realtime && realtime.pages.length === 0 && (
+                      <li className="text-sm text-muted-foreground">Nobody is on the site right now.</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </Panel>
+
+            <div className="grid gap-3">
+              <Panel title="Countries">
+                <BarList
+                  rows={stats?.countries.slice(0, 5)}
+                  loading={loading}
+                  empty="No location data yet"
+                  renderLabel={(code) => (
+                    <span className="flex items-center gap-2">
+                      <span aria-hidden>{countryFlag(code)}</span>
+                      {countryName(code)}
+                    </span>
+                  )}
+                />
+              </Panel>
+
+              <Panel
+                title="Devices"
+                action={
+                  <Segmented
+                    value={deviceTab}
+                    onChange={setDeviceTab}
+                    label="Device breakdown"
+                    options={[
+                      { value: "devices", label: "Type" },
+                      { value: "browsers", label: "Browser" },
+                      { value: "systems", label: "OS" },
+                    ]}
+                  />
+                }
+              >
+                <BarList rows={stats?.[deviceTab].slice(0, 5)} loading={loading} empty="No device data yet" />
+              </Panel>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}

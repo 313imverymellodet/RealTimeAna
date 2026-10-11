@@ -1,10 +1,18 @@
-import { updateSession } from "@/lib/supabase/proxy"
-import type { NextRequest } from "next/server"
+import { getSessionCookie } from "better-auth/cookies"
+import { NextResponse, type NextRequest } from "next/server"
 
-export async function proxy(request: NextRequest) {
-  return await updateSession(request)
+// Fast redirect for signed-out visitors. This only checks that a session cookie
+// exists; the dashboard layout verifies the session against the database.
+export function proxy(request: NextRequest) {
+  if (!getSessionCookie(request)) {
+    const url = request.nextUrl.clone()
+    url.pathname = "/auth/login"
+    url.search = ""
+    return NextResponse.redirect(url)
+  }
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/dashboard/:path*"],
 }

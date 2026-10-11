@@ -1,19 +1,18 @@
-import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { DashboardClient } from "@/components/dashboard/dashboard-client"
+import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import { getSessionUser } from "@/lib/auth"
+import { listSites } from "@/lib/sites"
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getSessionUser()
+  if (!user) redirect("/auth/login")
 
-  if (!user) {
-    redirect("/auth/login")
-  }
+  const sites = await listSites(user.id)
 
-  // Fetch user's sites
-  const { data: sites } = await supabase.from("sites").select("*").order("created_at", { ascending: false })
-
-  return <DashboardClient user={user} sites={sites || []} />
+  return (
+    <DashboardShell
+      email={user.email}
+      sites={sites.map(({ id, name, domain, publicToken }) => ({ id, name, domain, publicToken }))}
+    />
+  )
 }
