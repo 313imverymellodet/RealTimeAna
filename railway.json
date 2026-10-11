@@ -1,7 +1,6 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "deploy": {
-    "preDeployCommand": ["node scripts/migrate.mjs"],
     "startCommand": "pnpm start",
     "healthcheckPath": "/docs",
     "restartPolicyType": "ON_FAILURE"

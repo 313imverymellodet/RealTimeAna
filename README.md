@@ -24,7 +24,7 @@ point `DATABASE_URL` at it.
    - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`
    - `BETTER_AUTH_SECRET` = output of `openssl rand -base64 32`
    - `BETTER_AUTH_URL` and `NEXT_PUBLIC_SITE_URL` = your public URL, no trailing slash
-3. Deploy. `railway.json` runs `node scripts/migrate.mjs` before each release, so the schema stays current.
+3. Deploy. `pnpm start` applies pending migrations before the server starts, so the schema stays current.
 
 ## Database changes
 

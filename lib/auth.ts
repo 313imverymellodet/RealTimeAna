@@ -41,6 +41,10 @@ function createAuth() {
         },
       }),
     },
+    advanced: {
+      // Railway's proxy passes the visitor's address in these headers
+      ipAddress: { ipAddressHeaders: ["x-forwarded-for", "x-real-ip"] },
+    },
     // Must stay last: lets server actions and route handlers set auth cookies
     plugins: [nextCookies()],
   })
