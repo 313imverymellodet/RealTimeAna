@@ -36,10 +36,21 @@ const ASTRO = `---
     src="https://YOUR-PULSE-DOMAIN/tracker.js"></script>
 </head>`
 
+const GOAL_JS = `// A signup
+window.pulse?.("signup")
+
+// A sale worth 49
+window.pulse?.("purchase", { revenue: 49 })`
+
+const GOAL_HTML = `<button data-pulse-goal="signup">Create account</button>
+
+<a href="/thanks" data-pulse-goal="purchase" data-pulse-revenue="49">Buy now</a>`
+
 const SECTIONS = [
   { id: "install", label: "Install" },
   { id: "frameworks", label: "Framework guides" },
   { id: "verify", label: "Check it works" },
+  { id: "goals", label: "Goals and revenue" },
   { id: "data", label: "What we collect" },
   { id: "sharing", label: "Public dashboards" },
 ]
@@ -51,6 +62,7 @@ const COLLECTED = [
   ["Device", "Device type, browser and operating system, read from the user agent."],
   ["Location", "Country, region and city, derived from the IP address and rounded to roughly 11 km."],
   ["Time on page", "Seconds the tab was visible."],
+  ["Goals", "The goal names and revenue amounts your own code reports."],
 ]
 
 const NOT_COLLECTED = [
@@ -135,6 +147,27 @@ export default function DocsPage() {
             <p className="text-sm text-muted-foreground">
               Nothing showing? Visits from localhost are ignored, ad blockers may block the script, and browsers with Do
               Not Track turned on are not counted.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <Heading id="goals">Goals and revenue</Heading>
+            <p className="text-muted-foreground">
+              A goal is any action you care about: a signup, a demo request, a sale. Report one from your own code once
+              the Pulse script has loaded:
+            </p>
+            <CodeBlock code={GOAL_JS} />
+            <p className="text-muted-foreground">Or mark a button or link, with no JavaScript:</p>
+            <CodeBlock code={GOAL_HTML} />
+            <p className="text-sm text-muted-foreground">
+              Goal names can use letters, numbers, spaces, dashes and underscores. Revenue is a plain number in your
+              currency. Each goal is credited to the referrer or campaign that started that visit, which is what powers
+              the revenue figures in the Sources panel.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Revenue is the amount your site reports, so send it from your confirmation page or after a successful
+              payment. Tag links with <code className="font-mono text-foreground">?utm_campaign=name</code> or{" "}
+              <code className="font-mono text-foreground">?ref=name</code> to see campaigns.
             </p>
           </section>
 

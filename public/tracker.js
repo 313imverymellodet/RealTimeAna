@@ -66,6 +66,22 @@
     pageview()
   }
 
+  // Goals: pulse("signup") or pulse("purchase", { revenue: 49 })
+  function goal(name, props) {
+    send({ type: "event", name: String(name), path: location.pathname, revenue: props && props.revenue })
+  }
+  window.pulse = goal
+
+  // Or with no code: <button data-pulse-goal="signup" data-pulse-revenue="49">
+  document.addEventListener(
+    "click",
+    (event) => {
+      var el = event.target && event.target.closest && event.target.closest("[data-pulse-goal]")
+      if (el) goal(el.getAttribute("data-pulse-goal"), { revenue: Number(el.getAttribute("data-pulse-revenue")) || 0 })
+    },
+    true,
+  )
+
   // Single-page apps: treat history navigation as a new page view
   var pushState = history.pushState
   history.pushState = function () {

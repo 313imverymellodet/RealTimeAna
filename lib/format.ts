@@ -10,6 +10,13 @@ export function formatDuration(seconds: number) {
   return `${minutes}m ${String(seconds % 60).padStart(2, "0")}s`
 }
 
+export function formatMoney(cents: number) {
+  const dollars = cents / 100
+  return dollars >= 10_000
+    ? `$${compact.format(dollars)}`
+    : `$${dollars.toLocaleString("en", { minimumFractionDigits: dollars % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 })}`
+}
+
 // Percent change from the previous period, or null when there is nothing to compare with
 export function percentChange(current: number, previous: number) {
   if (previous === 0) return null

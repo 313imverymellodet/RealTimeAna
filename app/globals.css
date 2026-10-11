@@ -67,6 +67,7 @@
   --chart-5: oklch(0.6 0.15 200);
   --brand: oklch(0.84 0.17 158);
   --brand-foreground: oklch(0.16 0.03 160);
+  --revenue: oklch(0.82 0.15 80);
   --success: oklch(0.65 0.2 145);
   --warning: oklch(0.75 0.18 70);
   --sidebar: oklch(0.13 0.005 250);
@@ -85,6 +86,7 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-revenue: var(--revenue);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

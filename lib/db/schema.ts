@@ -141,6 +141,31 @@ export const pageViews = pgTable(
   ],
 )
 
+// Goals: named actions a site reports (signup, purchase, ...), optionally with revenue.
+// Source columns are copied from the visitor's session so conversions can be
+// attributed to the channel that brought them.
+export const events = pgTable(
+  "events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .notNull()
+      .references(() => sites.id, { onDelete: "cascade" }),
+    visitorId: text("visitor_id").notNull(),
+    sessionId: uuid("session_id").notNull(),
+    name: text("name").notNull(),
+    // Amount in cents, as reported by the site's own code
+    revenueCents: integer("revenue_cents"),
+    path: text("path"),
+    referrer: text("referrer"),
+    utmSource: text("utm_source"),
+    utmCampaign: text("utm_campaign"),
+    country: text("country"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("events_site_created_idx").on(t.siteId, t.createdAt)],
+)
+
 // One random salt per UTC day for visitor hashing. Old rows are deleted, which
 // makes earlier visitor hashes impossible to recompute.
 export const salts = pgTable("salts", {

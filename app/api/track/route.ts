@@ -11,6 +11,8 @@ import { getVisitorId, isBot, parseUserAgent } from "@/lib/visitor"
 const MAX_URL_LENGTH = 2048
 const MAX_EVENTS_PER_MINUTE = 120
 const SESSION_WINDOW_MS = 30 * 60 * 1000
+const GOAL_NAME_RE = /^[a-z0-9][a-z0-9_ -]{0,63}$/i
+const MAX_REVENUE = 1_000_000
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -66,9 +68,10 @@ export async function POST(request: NextRequest) {
     const { type, siteId, id, path } = body
 
     if (
-      (type !== "pageview" && type !== "duration") ||
+      (type !== "pageview" && type !== "duration" && type !== "event") ||
       !isUuid(siteId) ||
-      !isUuid(id) ||
+      (type !== "event" && !isUuid(id)) ||
+      (type === "event" && (typeof body.name !== "string" || !GOAL_NAME_RE.test(body.name))) ||
       typeof path !== "string" ||
       !path.startsWith("/") ||
       path.length > MAX_URL_LENGTH
@@ -113,6 +116,47 @@ export async function POST(request: NextRequest) {
       return json({ success: true })
     }
 
+    const visitorId = await getVisitorId(siteId, ip, userAgent)
+
+    // The visitor's latest page view in the last 30 minutes, if any. It carries the
+    // session id and the source (referrer, campaign) the session started from.
+    const [recent] = await db
+      .select({
+        sessionId: schema.pageViews.sessionId,
+        referrer: schema.pageViews.referrer,
+        utmSource: schema.pageViews.utmSource,
+        utmMedium: schema.pageViews.utmMedium,
+        utmCampaign: schema.pageViews.utmCampaign,
+        country: schema.pageViews.country,
+      })
+      .from(schema.pageViews)
+      .where(
+        and(
+          eq(schema.pageViews.siteId, siteId),
+          eq(schema.pageViews.visitorId, visitorId),
+          gte(schema.pageViews.createdAt, new Date(Date.now() - SESSION_WINDOW_MS)),
+        ),
+      )
+      .orderBy(desc(schema.pageViews.createdAt))
+      .limit(1)
+
+    if (type === "event") {
+      const revenue = Number(body.revenue)
+      await db.insert(schema.events).values({
+        siteId,
+        visitorId,
+        sessionId: recent?.sessionId ?? randomUUID(),
+        name: body.name.trim().toLowerCase(),
+        revenueCents: Number.isFinite(revenue) && revenue > 0 && revenue <= MAX_REVENUE ? Math.round(revenue * 100) : null,
+        path,
+        referrer: recent?.referrer ?? null,
+        utmSource: recent?.utmSource ?? null,
+        utmCampaign: recent?.utmCampaign ?? null,
+        country: recent?.country ?? lookupGeo(request.headers, ip).country,
+      })
+      return json({ success: true })
+    }
+
     // Count the pageview against the owner's monthly allowance (resets each UTC month)
     const [usage] = await db
       .insert(schema.usage)
@@ -130,22 +174,6 @@ export async function POST(request: NextRequest) {
       return json({ success: false, reason: "plan_limit_exceeded" })
     }
 
-    const visitorId = await getVisitorId(siteId, ip, userAgent)
-
-    // Continue the visitor's session if they were active in the last 30 minutes
-    const [recent] = await db
-      .select({ sessionId: schema.pageViews.sessionId })
-      .from(schema.pageViews)
-      .where(
-        and(
-          eq(schema.pageViews.siteId, siteId),
-          eq(schema.pageViews.visitorId, visitorId),
-          gte(schema.pageViews.createdAt, new Date(Date.now() - SESSION_WINDOW_MS)),
-        ),
-      )
-      .orderBy(desc(schema.pageViews.createdAt))
-      .limit(1)
-
     const geo = lookupGeo(request.headers, ip)
     const agent = parseUserAgent(userAgent)
 
@@ -157,10 +185,11 @@ export async function POST(request: NextRequest) {
         visitorId,
         sessionId: recent?.sessionId ?? randomUUID(),
         path,
-        referrer: referrerHost(body.referrer, site.domain),
-        utmSource: shortText(body.utmSource),
-        utmMedium: shortText(body.utmMedium),
-        utmCampaign: shortText(body.utmCampaign),
+        // Later pages in a session keep the source the session started from
+        referrer: recent ? recent.referrer : referrerHost(body.referrer, site.domain),
+        utmSource: recent ? recent.utmSource : shortText(body.utmSource),
+        utmMedium: recent ? recent.utmMedium : shortText(body.utmMedium),
+        utmCampaign: recent ? recent.utmCampaign : shortText(body.utmCampaign),
         ...geo,
         ...agent,
       })

@@ -12,11 +12,13 @@ function seeded(seed: number) {
   }
 }
 
-function share(total: number, parts: [string, number][]): BreakdownRow[] {
-  return parts.map(([label, weight]) => ({
+// Each part is [label, share of visitors, share of revenue]
+function share(total: number, parts: [string, number, number?][], revenueCents = 0): BreakdownRow[] {
+  return parts.map(([label, weight, revenueWeight]) => ({
     label,
     visitors: Math.round(total * weight),
     pageviews: Math.round(total * weight * 2.4),
+    revenueCents: Math.round(revenueCents * (revenueWeight ?? 0)),
   }))
 }
 
@@ -44,18 +46,35 @@ export function getDemoStats(range: RangeKey): Stats {
       t: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(hour)}:00:00`,
       visitors,
       pageviews: Math.round(visitors * (2.2 + random() * 0.5)),
+      // A few sales per bucket at $29 or $79
+      revenue: Math.round(visitors * 0.012 * (0.4 + random())) * (random() > 0.6 ? 79 : 29),
     }
   })
 
   const visitors = series.reduce((sum, point) => sum + point.visitors, 0)
   const pageviews = series.reduce((sum, point) => sum + point.pageviews, 0)
-  const totals: Totals = { visitors, pageviews, sessions: Math.round(visitors * 1.15), bounceRate: 41.8, avgDuration: 164 }
+  const revenueCents = series.reduce((sum, point) => sum + point.revenue, 0) * 100
+  const signups = Math.round(visitors * 0.046)
+  const purchases = Math.round(visitors * 0.011)
+  const totals: Totals = {
+    visitors,
+    pageviews,
+    sessions: Math.round(visitors * 1.15),
+    bounceRate: 41.8,
+    avgDuration: 164,
+    conversions: signups + purchases,
+    conversionRate: 4.9,
+    revenueCents,
+  }
   const previous: Totals = {
     visitors: Math.round(visitors * 0.89),
     pageviews: Math.round(pageviews * 0.92),
     sessions: Math.round(visitors),
     bounceRate: 44.1,
     avgDuration: 151,
+    conversions: Math.round((signups + purchases) * 0.84),
+    conversionRate: 4.4,
+    revenueCents: Math.round(revenueCents * 0.81),
   }
 
   return {
@@ -73,21 +92,57 @@ export function getDemoStats(range: RangeKey): Stats {
       ["/changelog", 0.05],
       ["/about", 0.03],
     ]),
-    referrers: share(visitors, [
-      ["Direct / none", 0.34],
-      ["google.com", 0.27],
-      ["news.ycombinator.com", 0.14],
-      ["x.com", 0.11],
-      ["github.com", 0.07],
-      ["reddit.com", 0.04],
+    entryPages: share(visitors, [
+      ["/", 0.52],
+      ["/blog/launch-week", 0.21],
+      ["/pricing", 0.11],
+      ["/docs", 0.08],
+      ["/changelog", 0.04],
     ]),
-    countries: share(visitors, [
-      ["US", 0.38],
-      ["DE", 0.12],
-      ["GB", 0.1],
-      ["IN", 0.09],
-      ["CA", 0.06],
+    referrers: share(
+      visitors,
+      [
+        ["Direct / none", 0.34, 0.22],
+        ["google.com", 0.27, 0.31],
+        ["news.ycombinator.com", 0.14, 0.08],
+        ["x.com", 0.11, 0.24],
+        ["github.com", 0.07, 0.11],
+        ["reddit.com", 0.04, 0.04],
+      ],
+      revenueCents,
+    ),
+    campaigns: share(
+      visitors,
+      [
+        ["launch-week", 0.13, 0.21],
+        ["newsletter", 0.06, 0.14],
+        ["producthunt", 0.04, 0.05],
+      ],
+      revenueCents,
+    ),
+    countries: share(
+      visitors,
+      [
+        ["US", 0.38, 0.47],
+        ["DE", 0.12, 0.13],
+        ["GB", 0.1, 0.12],
+        ["IN", 0.09, 0.03],
+        ["CA", 0.06, 0.08],
+      ],
+      revenueCents,
+    ),
+    cities: share(visitors, [
+      ["New York, US", 0.07],
+      ["San Francisco, US", 0.06],
+      ["London, GB", 0.05],
+      ["Berlin, DE", 0.04],
+      ["Bengaluru, IN", 0.03],
     ]),
+    goals: [
+      { name: "signup", completions: signups, visitors: signups, revenueCents: 0 },
+      { name: "purchase", completions: purchases, visitors: purchases, revenueCents },
+      { name: "newsletter", completions: Math.round(visitors * 0.021), visitors: Math.round(visitors * 0.021), revenueCents: 0 },
+    ],
     devices: share(visitors, [
       ["Desktop", 0.58],
       ["Mobile", 0.38],

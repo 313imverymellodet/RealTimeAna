@@ -12,9 +12,11 @@ import { authClient } from "@/lib/auth-client"
 interface AuthFormProps {
   mode: "login" | "register"
   providers: { github: boolean; google: boolean }
+  // Website typed on the landing page; added to the new account right after sign-up
+  domain?: string
 }
 
-export function AuthForm({ mode, providers }: AuthFormProps) {
+export function AuthForm({ mode, providers, domain }: AuthFormProps) {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -37,6 +39,15 @@ export function AuthForm({ mode, providers }: AuthFormProps) {
       return
     }
 
+    if (isRegister && domain) {
+      // Best effort: if this fails the dashboard simply asks for the website again
+      await fetch("/api/sites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain }),
+      }).catch(() => {})
+    }
+
     router.push("/dashboard")
     router.refresh()
   }
@@ -57,7 +68,11 @@ export function AuthForm({ mode, providers }: AuthFormProps) {
         <div className="rounded-2xl border border-border bg-card/80 p-6 backdrop-blur">
           <h1 className="text-xl font-semibold tracking-tight">{isRegister ? "Create your account" : "Welcome back"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {isRegister ? "Free during beta. No credit card." : "Sign in to see your live traffic."}
+            {isRegister
+              ? domain
+                ? `One step to start tracking ${domain}. Free during beta.`
+                : "Free during beta. No credit card."
+              : "Sign in to see your live traffic."}
           </p>
 
           {(providers.github || providers.google) && (

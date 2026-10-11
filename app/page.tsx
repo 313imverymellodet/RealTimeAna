@@ -1,4 +1,4 @@
-import { ArrowRight, Bot, Cookie, Feather, Globe2, Link2, Share2 } from "lucide-react"
+import { ArrowRight, Bot, Cookie, Feather, Globe2, Link2, Share2, Target } from "lucide-react"
 import Link from "next/link"
 import { DashboardView } from "@/components/analytics/dashboard-view"
 import { LiveDot } from "@/components/brand"
@@ -6,6 +6,7 @@ import { CodeBlock } from "@/components/install-snippet"
 import { SiteFooter, SiteNav } from "@/components/marketing/site-nav"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { BETA_PLAN } from "@/lib/plans"
 
 const FEATURES = [
@@ -22,15 +23,21 @@ const FEATURES = [
     span: "",
   },
   {
-    icon: Feather,
-    title: "1.3 KB script",
-    body: "One deferred script tag, about 1.3 KB gzipped. It works with single-page apps out of the box.",
+    icon: Target,
+    title: "Goals and revenue",
+    body: "Mark signups and sales with one line. See conversion rate and revenue next to your traffic, on the same chart.",
     span: "",
   },
   {
     icon: Link2,
-    title: "Know what sent them",
-    body: "Referrers and UTM campaigns are captured automatically, so you can see which post, launch or link actually worked.",
+    title: "Know which channel pays",
+    body: "Every conversion is tied back to the referrer or campaign that started the visit, so you can see which post, launch or link actually earned money.",
+    span: "md:col-span-2",
+  },
+  {
+    icon: Feather,
+    title: "1.5 KB script",
+    body: "One deferred script tag, about 1.5 KB gzipped. It works with single-page apps out of the box.",
     span: "",
   },
   {
@@ -43,7 +50,7 @@ const FEATURES = [
     icon: Bot,
     title: "Honest numbers",
     body: "Known bots are filtered out, and Do Not Track and Global Privacy Control are respected. Time on page counts only while the tab is visible.",
-    span: "md:col-span-2",
+    span: "",
   },
 ]
 
@@ -68,7 +75,7 @@ const FAQ = [
   },
   {
     q: "Will it slow my site down?",
-    a: "The script is about 1.3 KB gzipped, loads with defer, and sends one small request per page view.",
+    a: "The script is about 1.5 KB gzipped, loads with defer, and sends one small request per page view.",
   },
   {
     q: "Does it work with Next.js, React or other single-page apps?",
@@ -97,21 +104,38 @@ export default function Home() {
               See who&apos;s on your site <span className="text-brand">right now</span>
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base text-pretty text-muted-foreground sm:text-lg">
-              Live web analytics with no cookies and nothing stored in your visitors&apos; browsers. One script tag, and
-              traffic shows up on your dashboard in seconds.
+              Live traffic, conversions and revenue by channel, with no cookies and nothing stored in your
+              visitors&apos; browsers. One script tag, and it shows up in seconds.
             </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg" className="bg-brand px-6 text-brand-foreground hover:bg-brand/90">
-                <Link href="/auth/register">
-                  Start free
-                  <ArrowRight className="size-4" />
-                </Link>
+            <form
+              action="/auth/register"
+              className="mx-auto mt-8 flex max-w-md flex-col gap-2 sm:flex-row"
+              aria-label="Add your website"
+            >
+              <label htmlFor="hero-domain" className="sr-only">
+                Your website
+              </label>
+              <Input
+                id="hero-domain"
+                name="domain"
+                placeholder="yourwebsite.com"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="url"
+                className="h-11 flex-1 bg-card/70 backdrop-blur"
+              />
+              <Button type="submit" size="lg" className="h-11 bg-brand px-6 text-brand-foreground hover:bg-brand/90">
+                Add my website
+                <ArrowRight className="size-4" />
               </Button>
-              <Button asChild size="lg" variant="outline" className="bg-transparent px-6">
-                <Link href="/demo">Open the live demo</Link>
-              </Button>
-            </div>
-            <p className="mt-4 text-xs text-muted-foreground">No credit card. Set up in about a minute.</p>
+            </form>
+            <p className="mt-4 text-xs text-muted-foreground">
+              No credit card. Set up in about a minute.{" "}
+              <Link href="/demo" className="text-foreground underline underline-offset-4">
+                See the live demo
+              </Link>
+            </p>
           </div>
 
           {/* Product preview: the real dashboard component running on sample data */}
@@ -193,6 +217,7 @@ export default function Home() {
                 <li>{BETA_PLAN.pageviewLimit.toLocaleString("en")} pageviews per month</li>
                 <li>{BETA_PLAN.siteLimit} websites</li>
                 <li>Live visitors, sources, pages, countries and devices</li>
+                <li>Goals, conversion rate and revenue by channel</li>
                 <li>Public dashboard links</li>
               </ul>
               <Button asChild className="mt-8 w-full bg-brand text-brand-foreground hover:bg-brand/90">
@@ -222,9 +247,9 @@ export default function Home() {
           <div className="glow-brand pointer-events-none absolute inset-0" aria-hidden />
           <div className="relative mx-auto max-w-2xl px-4 sm:px-6">
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
-              Your next visitor is about to land.
+              Find out which channel brings your customers.
             </h2>
-            <p className="mt-4 text-muted-foreground">Be watching when they do.</p>
+            <p className="mt-4 text-muted-foreground">Traffic, conversions and revenue in one live view.</p>
             <Button asChild size="lg" className="mt-8 bg-brand px-6 text-brand-foreground hover:bg-brand/90">
               <Link href="/auth/register">
                 Start free

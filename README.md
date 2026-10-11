@@ -1,6 +1,6 @@
 # Pulse
 
-Live web analytics without cookies: a 1.3 KB tracking script, an ingestion endpoint and a dashboard.
+Live web analytics without cookies: a 1.5 KB tracking script, an ingestion endpoint and a dashboard.
 
 Next.js 16 (App Router) · Postgres with Drizzle · Better Auth · deployed on Railway.
 
@@ -51,6 +51,11 @@ Sites embed `public/tracker.js` with their site id. It posts pageview and durati
   (`npm run-script updatedb license_key=...` inside `node_modules/geoip-lite`) for better accuracy.
 - **Rate limiting** in `lib/rate-limit.ts` is in memory and per instance: good enough for one Railway
   instance, replace with a shared store before scaling out.
+
+**Goals and revenue.** Sites call `pulse("signup")` or `pulse("purchase", { revenue: 49 })`, or add
+`data-pulse-goal="signup"` to an element. Each event copies the referrer and campaign of the visitor's
+session, which is how revenue is attributed to a channel. Revenue is whatever the site's own code reports;
+it is not verified against a payment provider.
 
 Statistics are aggregated in Postgres (`lib/stats.ts`); the browser only ever receives totals.
 

@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { Area, Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { ArrowDownRight, ArrowUpRight } from "lucide-react"
+import Link from "next/link"
 import { LiveDot } from "@/components/brand"
 import { Globe } from "@/components/globe"
-import { countryFlag, countryName, formatDuration, formatNumber, percentChange } from "@/lib/format"
+import { countryFlag, countryName, formatDuration, formatMoney, formatNumber, percentChange } from "@/lib/format"
 import type { BreakdownRow, RangeKey, Realtime, Stats } from "@/lib/stats"
 import { cn } from "@/lib/utils"
 
@@ -162,7 +163,8 @@ function BarList({
             style={{ width: `${Math.max((row.visitors / max) * 100, 2)}%` }}
           />
           <span className="relative min-w-0 truncate">{renderLabel ? renderLabel(row.label) : row.label}</span>
-          <span className="tabular relative shrink-0 font-mono text-xs text-muted-foreground">
+          <span className="tabular relative flex shrink-0 items-center gap-3 font-mono text-xs text-muted-foreground">
+            {row.revenueCents ? <span className="text-revenue">{formatMoney(row.revenueCents)}</span> : null}
             {formatNumber(row.visitors)}
           </span>
         </li>
@@ -196,7 +198,7 @@ function StatTile({
         {onSelect && <span className={cn("size-1.5 rounded-full", selected ? "bg-brand" : "bg-border")} />}
         {label}
       </span>
-      <span className="tabular mt-2 block text-2xl font-semibold tracking-tight sm:text-3xl">
+      <span className="tabular mt-2 block text-2xl font-semibold tracking-tight">
         {loading ? <span className="inline-block h-7 w-20 animate-pulse rounded bg-muted/60 align-middle" /> : value}
       </span>
       <span
@@ -240,6 +242,9 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
   const [range, setRange] = useState<RangeKey>("7d")
   const [metric, setMetric] = useState<Metric>("visitors")
   const [deviceTab, setDeviceTab] = useState<"devices" | "browsers" | "systems">("devices")
+  const [pageTab, setPageTab] = useState<"pages" | "entryPages">("pages")
+  const [sourceTab, setSourceTab] = useState<"referrers" | "campaigns">("referrers")
+  const [locationTab, setLocationTab] = useState<"countries" | "cities">("countries")
 
   const statsQuery = useMemo(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -250,6 +255,7 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
   const { data: realtime } = usePolling<Realtime>(realtimeUrl, realtimeDelay)
 
   const online = realtime?.visitors ?? 0
+  const hasRevenue = Boolean(stats?.series.some((point) => point.revenue > 0))
   const showEmpty = Boolean(emptyState) && stats !== null && !stats.hasData
 
   return (
@@ -280,7 +286,7 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
         emptyState
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
             <StatTile
               label="Visitors"
               value={formatNumber(stats?.totals.visitors ?? 0)}
@@ -298,6 +304,18 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
               onSelect={() => setMetric("pageviews")}
             />
             <StatTile
+              label="Conversion rate"
+              value={`${stats?.totals.conversionRate ?? 0}%`}
+              change={stats ? percentChange(stats.totals.conversionRate, stats.previous.conversionRate) : null}
+              loading={loading}
+            />
+            <StatTile
+              label="Revenue"
+              value={formatMoney(stats?.totals.revenueCents ?? 0)}
+              change={stats ? percentChange(stats.totals.revenueCents, stats.previous.revenueCents) : null}
+              loading={loading}
+            />
+            <StatTile
               label="Bounce rate"
               value={`${stats?.totals.bounceRate ?? 0}%`}
               change={stats ? percentChange(stats.totals.bounceRate, stats.previous.bounceRate) : null}
@@ -313,10 +331,22 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
           </div>
 
           <section className="rounded-2xl border border-border bg-card/60 p-4" aria-label={`${metric} over time`}>
+            {hasRevenue && (
+              <p className="mb-2 flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-0.5 w-3 rounded bg-brand" />
+                  {metric === "visitors" ? "Visitors" : "Pageviews"}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="size-2 rounded-sm bg-revenue" />
+                  Revenue
+                </span>
+              </p>
+            )}
             <div className="h-64 sm:h-72">
               {stats ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={stats.series} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                  <ComposedChart data={stats.series} margin={{ top: 8, right: hasRevenue ? 0 : 8, left: -16, bottom: 0 }}>
                     <defs>
                       <linearGradient id="metricFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.3} />
@@ -333,16 +363,32 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
                       tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                     />
                     <YAxis
+                      yAxisId="count"
                       allowDecimals={false}
                       axisLine={false}
                       tickLine={false}
                       tickFormatter={(value: number) => formatNumber(value)}
                       tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                     />
+                    {hasRevenue && (
+                      <YAxis
+                        yAxisId="revenue"
+                        orientation="right"
+                        axisLine={false}
+                        tickLine={false}
+                        width={48}
+                        tickFormatter={(value: number) => formatMoney(value * 100)}
+                        tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                      />
+                    )}
                     <Tooltip
                       cursor={{ stroke: "var(--border)" }}
                       labelFormatter={(t) => formatTick(String(t), stats.unit)}
-                      formatter={(value) => [Number(value).toLocaleString("en"), metric === "visitors" ? "Visitors" : "Pageviews"]}
+                      formatter={(value, name) =>
+                        name === "revenue"
+                          ? [formatMoney(Number(value) * 100), "Revenue"]
+                          : [Number(value).toLocaleString("en"), metric === "visitors" ? "Visitors" : "Pageviews"]
+                      }
                       contentStyle={{
                         background: "var(--popover)",
                         border: "1px solid var(--border)",
@@ -352,7 +398,19 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
                       labelStyle={{ color: "var(--muted-foreground)", marginBottom: 4 }}
                       itemStyle={{ color: "var(--foreground)" }}
                     />
+                    {hasRevenue && (
+                      <Bar
+                        yAxisId="revenue"
+                        dataKey="revenue"
+                        fill="var(--revenue)"
+                        fillOpacity={0.75}
+                        radius={[3, 3, 0, 0]}
+                        maxBarSize={18}
+                        isAnimationActive={false}
+                      />
+                    )}
                     <Area
+                      yAxisId="count"
                       type="monotone"
                       dataKey={metric}
                       stroke="var(--brand)"
@@ -362,7 +420,7 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
                       activeDot={{ r: 4, strokeWidth: 0, fill: "var(--brand)" }}
                       isAnimationActive={false}
                     />
-                  </AreaChart>
+                  </ComposedChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="size-full animate-pulse rounded-xl bg-muted/40" aria-hidden />
@@ -371,22 +429,107 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
           </section>
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <Panel title="Top pages">
+            <Panel
+              title="Pages"
+              action={
+                <Segmented
+                  value={pageTab}
+                  onChange={setPageTab}
+                  label="Page breakdown"
+                  options={[
+                    { value: "pages", label: "Top" },
+                    { value: "entryPages", label: "Entry" },
+                  ]}
+                />
+              }
+            >
               <BarList
-                rows={stats?.pages}
+                rows={stats?.[pageTab]}
                 loading={loading}
                 empty="No page views in this period"
                 renderLabel={(label) => <span className="font-mono text-[13px]">{label}</span>}
               />
             </Panel>
 
-            <Panel title="Sources">
-              <BarList rows={stats?.referrers} loading={loading} empty="No visits in this period" />
+            <Panel
+              title="Sources"
+              action={
+                <Segmented
+                  value={sourceTab}
+                  onChange={setSourceTab}
+                  label="Source breakdown"
+                  options={[
+                    { value: "referrers", label: "Referrer" },
+                    { value: "campaigns", label: "Campaign" },
+                  ]}
+                />
+              }
+            >
+              <BarList
+                rows={stats?.[sourceTab]}
+                loading={loading}
+                empty={
+                  sourceTab === "campaigns"
+                    ? "No campaign visits yet. Add ?utm_campaign=name or ?ref=name to your links."
+                    : "No visits in this period"
+                }
+              />
+            </Panel>
+
+            <Panel title="Goals">
+              {loading ? (
+                <BarList rows={undefined} loading empty="" />
+              ) : stats && stats.goals.length > 0 ? (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-muted-foreground">
+                      <th scope="col" className="px-2 py-1.5 font-normal">
+                        Goal
+                      </th>
+                      <th scope="col" className="px-2 py-1.5 text-right font-normal">
+                        Completions
+                      </th>
+                      <th scope="col" className="px-2 py-1.5 text-right font-normal">
+                        Rate
+                      </th>
+                      <th scope="col" className="px-2 py-1.5 text-right font-normal">
+                        Revenue
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="tabular">
+                    {stats.goals.map((goal) => (
+                      <tr key={goal.name} className="border-t border-border/60">
+                        <td className="max-w-0 truncate px-2 py-2 font-medium">{goal.name}</td>
+                        <td className="px-2 py-2 text-right font-mono text-xs">{formatNumber(goal.completions)}</td>
+                        <td className="px-2 py-2 text-right font-mono text-xs text-muted-foreground">
+                          {stats.totals.visitors > 0
+                            ? `${Math.round((Math.min(goal.visitors, stats.totals.visitors) / stats.totals.visitors) * 1000) / 10}%`
+                            : "0%"}
+                        </td>
+                        <td className="px-2 py-2 text-right font-mono text-xs text-revenue">
+                          {goal.revenueCents > 0 ? formatMoney(goal.revenueCents) : ""}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                  <p>No goals tracked yet.</p>
+                  <p className="mt-1">
+                    Count signups and sales with one line of code.{" "}
+                    <Link href="/docs#goals" className="text-foreground underline underline-offset-4">
+                      See how
+                    </Link>
+                  </p>
+                </div>
+              )}
             </Panel>
 
             <Panel title="Live visitors" className="overflow-hidden">
               <div className="grid items-center gap-2 sm:grid-cols-2">
-                <Globe points={realtime?.points ?? []} className="mx-auto max-w-[280px]" />
+                <Globe points={realtime?.points ?? []} className="mx-auto max-w-[240px]" />
                 <div className="p-2">
                   <p className="tabular text-4xl font-semibold tracking-tight">{formatNumber(online)}</p>
                   <p className="text-sm text-muted-foreground">visitors in the last 5 minutes</p>
@@ -405,39 +548,54 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
               </div>
             </Panel>
 
-            <div className="grid gap-3">
-              <Panel title="Countries">
-                <BarList
-                  rows={stats?.countries.slice(0, 5)}
-                  loading={loading}
-                  empty="No location data yet"
-                  renderLabel={(code) => (
-                    <span className="flex items-center gap-2">
-                      <span aria-hidden>{countryFlag(code)}</span>
-                      {countryName(code)}
-                    </span>
-                  )}
+            <Panel
+              title="Locations"
+              action={
+                <Segmented
+                  value={locationTab}
+                  onChange={setLocationTab}
+                  label="Location breakdown"
+                  options={[
+                    { value: "countries", label: "Country" },
+                    { value: "cities", label: "City" },
+                  ]}
                 />
-              </Panel>
-
-              <Panel
-                title="Devices"
-                action={
-                  <Segmented
-                    value={deviceTab}
-                    onChange={setDeviceTab}
-                    label="Device breakdown"
-                    options={[
-                      { value: "devices", label: "Type" },
-                      { value: "browsers", label: "Browser" },
-                      { value: "systems", label: "OS" },
-                    ]}
-                  />
+              }
+            >
+              <BarList
+                rows={stats?.[locationTab].slice(0, 6)}
+                loading={loading}
+                empty="No location data yet"
+                renderLabel={(label) =>
+                  locationTab === "countries" ? (
+                    <span className="flex items-center gap-2">
+                      <span aria-hidden>{countryFlag(label)}</span>
+                      {countryName(label)}
+                    </span>
+                  ) : (
+                    label
+                  )
                 }
-              >
-                <BarList rows={stats?.[deviceTab].slice(0, 5)} loading={loading} empty="No device data yet" />
-              </Panel>
-            </div>
+              />
+            </Panel>
+
+            <Panel
+              title="Devices"
+              action={
+                <Segmented
+                  value={deviceTab}
+                  onChange={setDeviceTab}
+                  label="Device breakdown"
+                  options={[
+                    { value: "devices", label: "Type" },
+                    { value: "browsers", label: "Browser" },
+                    { value: "systems", label: "OS" },
+                  ]}
+                />
+              }
+            >
+              <BarList rows={stats?.[deviceTab].slice(0, 6)} loading={loading} empty="No device data yet" />
+            </Panel>
           </div>
         </>
       )}
