@@ -46,12 +46,16 @@ const GOAL_HTML = `<button data-pulse-goal="signup">Create account</button>
 
 <a href="/thanks" data-pulse-goal="purchase" data-pulse-revenue="49">Buy now</a>`
 
+const IDENTIFY_JS = `// Run on every page while the user is signed in
+window.pulse?.identify("user_8142")`
+
 const SECTIONS = [
   { id: "install", label: "Install" },
   { id: "frameworks", label: "Framework guides" },
   { id: "verify", label: "Check it works" },
   { id: "goals", label: "Goals and revenue" },
   { id: "funnels", label: "Funnels and journeys" },
+  { id: "identify", label: "Identify users" },
   { id: "data", label: "What we collect" },
   { id: "sharing", label: "Public dashboards" },
 ]
@@ -64,6 +68,7 @@ const COLLECTED = [
   ["Location", "Country, region and city, derived from the IP address and rounded to roughly 11 km."],
   ["Time on page", "Seconds the tab was visible."],
   ["Goals", "The goal names and revenue amounts your own code reports."],
+  ["User link", "If you identify signed-in users: a one-way hash of the ID you pass. The ID itself is not stored."],
 ]
 
 const NOT_COLLECTED = [
@@ -184,9 +189,27 @@ export default function DocsPage() {
               goals they completed, in order, with where they came from.
             </p>
             <p className="text-sm text-muted-foreground">
-              Because a visitor is only recognised for one day, funnels and journeys cover what a person does within a
-              single day. Someone who signs up today and buys next week appears as two separate visitors. Journeys are
-              visible only to you, never on a public dashboard link.
+              An anonymous visitor is only recognised for one day, so by default funnels and journeys cover a single
+              day. To follow people for longer, identify your signed-in users (next section). Journeys are visible only
+              to you, never on a public dashboard link.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <Heading id="identify">Identify signed-in users</Heading>
+            <p className="text-muted-foreground">
+              If your site has accounts, tell Pulse who is signed in on each page load. Use your own stable user ID:
+            </p>
+            <CodeBlock code={IDENTIFY_JS} />
+            <p className="text-muted-foreground">
+              From then on, that person counts as one visitor in funnels and journeys across days and devices,
+              including the pages they viewed earlier the same day before signing in. Someone who signs up on Monday
+              and buys the following week now completes the funnel.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Pulse stores only a one-way hash of the ID, never the ID itself, and still writes nothing to the
+              visitor&apos;s browser. Prefer an internal ID over an email address. Visitor totals on the main
+              dashboard are unchanged and still count daily uniques.
             </p>
           </section>
 

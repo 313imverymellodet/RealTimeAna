@@ -6,13 +6,15 @@ import { getClientIp, lookupGeo } from "@/lib/geo"
 import { getPlan } from "@/lib/plans"
 import { isRateLimited } from "@/lib/rate-limit"
 import { isUuid, normalizeDomain } from "@/lib/sites"
-import { getVisitorId, isBot, parseUserAgent } from "@/lib/visitor"
+import { getVisitorId, hashUserId, isBot, parseUserAgent } from "@/lib/visitor"
 
 const MAX_URL_LENGTH = 2048
 const MAX_EVENTS_PER_MINUTE = 120
 const SESSION_WINDOW_MS = 30 * 60 * 1000
 const GOAL_NAME_RE = /^[a-z0-9][a-z0-9_ -]{0,63}$/i
 const MAX_REVENUE = 1_000_000
+const MAX_USER_ID_LENGTH = 256
+const EVENT_TYPES = ["pageview", "duration", "event", "identify"]
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -68,9 +70,11 @@ export async function POST(request: NextRequest) {
     const { type, siteId, id, path } = body
 
     if (
-      (type !== "pageview" && type !== "duration" && type !== "event") ||
+      !EVENT_TYPES.includes(type) ||
       !isUuid(siteId) ||
-      (type !== "event" && !isUuid(id)) ||
+      ((type === "pageview" || type === "duration") && !isUuid(id)) ||
+      (type === "identify" &&
+        (typeof body.userId !== "string" || body.userId.length === 0 || body.userId.length > MAX_USER_ID_LENGTH)) ||
       (type === "event" && (typeof body.name !== "string" || !GOAL_NAME_RE.test(body.name))) ||
       typeof path !== "string" ||
       !path.startsWith("/") ||
@@ -117,6 +121,19 @@ export async function POST(request: NextRequest) {
     }
 
     const visitorId = await getVisitorId(siteId, ip, userAgent)
+
+    if (type === "identify") {
+      // Tie today's anonymous visitor to the site's signed-in user (stored as a hash)
+      const userId = hashUserId(siteId, body.userId)
+      await db
+        .insert(schema.identities)
+        .values({ siteId, visitorId, userId })
+        .onConflictDoUpdate({
+          target: [schema.identities.siteId, schema.identities.visitorId],
+          set: { userId },
+        })
+      return json({ success: true })
+    }
 
     // The visitor's latest page view in the last 30 minutes, if any. It carries the
     // session id and the source (referrer, campaign) the session started from.

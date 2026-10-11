@@ -35,6 +35,11 @@ export async function getVisitorId(siteId: string, ip: string | null, userAgent:
   return createHash("sha256").update(`${salt}|${siteId}|${ip || "unknown"}|${userAgent}`).digest("hex").slice(0, 32)
 }
 
+// Stable id for a signed-in user a site identifies. Same shape as a visitor id.
+export function hashUserId(siteId: string, userId: string): string {
+  return createHash("sha256").update(`user|${siteId}|${userId}`).digest("hex").slice(0, 32)
+}
+
 export function parseUserAgent(userAgent: string) {
   const ua = userAgent.toLowerCase()
 

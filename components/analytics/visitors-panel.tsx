@@ -1,6 +1,6 @@
 "use client"
 
-import { FileText, Target } from "lucide-react"
+import { FileText, Target, UserCheck } from "lucide-react"
 import { useState } from "react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { countryFlag, countryName, formatDuration, formatMoney } from "@/lib/format"
@@ -18,6 +18,15 @@ function timeAgo(iso: string) {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
   if (seconds < 86_400) return `${Math.floor(seconds / 3600)}h ago`
   return new Date(iso).toLocaleDateString("en", { month: "short", day: "numeric" })
+}
+
+// Time of day for today's steps; date and time for earlier ones
+function stepTime(iso: string) {
+  const date = new Date(iso)
+  const time = date.toLocaleTimeString("en", { hour: "numeric", minute: "2-digit" })
+  return date.toDateString() === new Date().toDateString()
+    ? time
+    : `${date.toLocaleDateString("en", { month: "short", day: "numeric" })}, ${time}`
 }
 
 function Avatar({ id }: { id: string }) {
@@ -90,7 +99,7 @@ function Journey({ url, visitor }: { url: string; visitor: VisitorSummary }) {
                   <span className="min-w-0 truncate font-mono text-[13px]">{step.label}</span>
                 )}
                 <time dateTime={step.at} className="tabular shrink-0 font-mono text-xs text-muted-foreground">
-                  {new Date(step.at).toLocaleTimeString("en", { hour: "numeric", minute: "2-digit" })}
+                  {stepTime(step.at)}
                 </time>
               </p>
               {step.kind === "page" && step.seconds ? (
@@ -132,6 +141,12 @@ export function VisitorsPanel({ url, query }: { url: string; query: string }) {
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2 text-sm font-medium">
                       <span className="truncate">{visitorNickname(visitor.id)}</span>
+                      {visitor.identified && (
+                        <span className="flex shrink-0 items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-normal text-muted-foreground">
+                          <UserCheck className="size-3" aria-hidden />
+                          Signed in
+                        </span>
+                      )}
                       {visitor.revenueCents > 0 ? (
                         <span className="tabular shrink-0 rounded-full bg-revenue/15 px-2 py-0.5 font-mono text-[11px] text-revenue">
                           {formatMoney(visitor.revenueCents)}
@@ -160,7 +175,8 @@ export function VisitorsPanel({ url, query }: { url: string; query: string }) {
           <p className="px-2 py-8 text-center text-sm text-muted-foreground">No visitors in this period.</p>
         )}
         <p className="border-t border-border/60 px-2 pt-2.5 pb-1 text-xs text-muted-foreground">
-          Names are random labels for anonymous visitors. A visitor is tracked for one day only.
+          Names are random labels. Anonymous visitors are recognised for one day; signed-in users you identify are
+          followed across days.
         </p>
       </Panel>
 
@@ -177,6 +193,7 @@ export function VisitorsPanel({ url, query }: { url: string; query: string }) {
                   {open.pageviews} {open.pageviews === 1 ? "page" : "pages"}
                   {open.goals > 0 ? `, ${open.goals} ${open.goals === 1 ? "goal" : "goals"}` : ""} · last seen{" "}
                   {timeAgo(open.lastSeen)}
+                  {open.identified ? " · signed-in user, all visits shown" : ""}
                 </SheetDescription>
               </SheetHeader>
               <Journey url={url} visitor={open} />

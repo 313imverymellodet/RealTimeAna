@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm"
 import {
   boolean,
   date,
+  primaryKey,
   jsonb,
   doublePrecision,
   index,
@@ -165,6 +166,22 @@ export const events = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("events_site_created_idx").on(t.siteId, t.createdAt)],
+)
+
+// Links a daily visitor hash to a signed-in user the site identified, so funnels
+// and journeys can follow that person across days and devices. `userId` is a
+// one-way hash of the id the site passed; the id itself is never stored.
+export const identities = pgTable(
+  "identities",
+  {
+    siteId: uuid("site_id")
+      .notNull()
+      .references(() => sites.id, { onDelete: "cascade" }),
+    visitorId: text("visitor_id").notNull(),
+    userId: text("user_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.siteId, t.visitorId] }), index("identities_site_user_idx").on(t.siteId, t.userId)],
 )
 
 export interface FunnelStep {

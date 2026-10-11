@@ -65,13 +65,16 @@ async function countSteps(siteId: string, from: SQL, steps: FunnelStep[]): Promi
 
   const [row] = await rows<Record<string, string>>(sql`
     with acts as (
-      select visitor_id, created_at as at, 'page' as kind, path as value
-      from page_views
-      where site_id = ${siteId} and created_at >= ${from}
+      -- An identified user keeps one id across days and devices; everyone else is a daily visitor hash
+      select coalesce(i.user_id, p.visitor_id) as visitor_id, p.created_at as at, 'page' as kind, p.path as value
+      from page_views p
+      left join identities i on i.site_id = p.site_id and i.visitor_id = p.visitor_id
+      where p.site_id = ${siteId} and p.created_at >= ${from}
       union all
-      select visitor_id, created_at as at, 'goal' as kind, name as value
-      from events
-      where site_id = ${siteId} and created_at >= ${from}
+      select coalesce(i.user_id, e.visitor_id) as visitor_id, e.created_at as at, 'goal' as kind, e.name as value
+      from events e
+      left join identities i on i.site_id = e.site_id and i.visitor_id = e.visitor_id
+      where e.site_id = ${siteId} and e.created_at >= ${from}
     ),
     ${sql.join(stages, sql`, `)}
     select ${sql.join(counts, sql`, `)}

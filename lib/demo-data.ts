@@ -319,6 +319,8 @@ export function getDemoVisitors(): VisitorSummary[] {
     const goals = visitor.steps.filter((step) => step[1] === "goal")
     return {
       id: visitor.id,
+      // The two buyers in the sample are shown as signed-in users
+      identified: goals.some((step) => step[2] === "purchase"),
       firstSeen: demoStepTime(visitor.minutesAgo, 0, last),
       lastSeen: demoStepTime(visitor.minutesAgo, last, last),
       pageviews: pages.length,

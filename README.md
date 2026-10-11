@@ -1,6 +1,6 @@
 # Pulse
 
-Live web analytics without cookies: a 1.5 KB tracking script, an ingestion endpoint and a dashboard.
+Live web analytics without cookies: a 1.6 KB tracking script, an ingestion endpoint and a dashboard.
 
 Next.js 16 (App Router) · Postgres with Drizzle · Better Auth · deployed on Railway.
 
@@ -56,6 +56,10 @@ Sites embed `public/tracker.js` with their site id. It posts pageview and durati
 `data-pulse-goal="signup"` to an element. Each event copies the referrer and campaign of the visitor's
 session, which is how revenue is attributed to a channel. Revenue is whatever the site's own code reports;
 it is not verified against a payment provider.
+
+**Signed-in users.** `pulse.identify("user_123")` links the day's visitor hash to a hash of the site's own
+user id (`identities` table). Funnels and journeys group by that id when present, so they follow a person
+across days and devices. Dashboard visitor totals still count daily uniques.
 
 Statistics are aggregated in Postgres (`lib/stats.ts`); the browser only ever receives totals.
 

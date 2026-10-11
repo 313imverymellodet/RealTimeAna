@@ -36,8 +36,8 @@ const FEATURES = [
   },
   {
     icon: Feather,
-    title: "1.5 KB script",
-    body: "One deferred script tag, about 1.5 KB gzipped. It works with single-page apps out of the box.",
+    title: "1.6 KB script",
+    body: "One deferred script tag, about 1.6 KB gzipped. It works with single-page apps out of the box.",
     span: "",
   },
   {
@@ -81,7 +81,7 @@ const FAQ = [
   },
   {
     q: "Will it slow my site down?",
-    a: "The script is about 1.5 KB gzipped, loads with defer, and sends one small request per page view.",
+    a: "The script is about 1.6 KB gzipped, loads with defer, and sends one small request per page view.",
   },
   {
     q: "Does it work with Next.js, React or other single-page apps?",

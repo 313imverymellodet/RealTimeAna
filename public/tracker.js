@@ -70,6 +70,14 @@
   function goal(name, props) {
     send({ type: "event", name: String(name), path: location.pathname, revenue: props && props.revenue })
   }
+  // Signed-in users: pulse.identify("user_123") on each page load while logged in.
+  // Lets funnels and journeys follow one person across days. Nothing is stored in the browser.
+  var identified
+  goal.identify = function (userId) {
+    if (!userId || identified === String(userId)) return
+    identified = String(userId)
+    send({ type: "identify", userId: identified, path: location.pathname })
+  }
   window.pulse = goal
 
   // Or with no code: <button data-pulse-goal="signup" data-pulse-revenue="49">

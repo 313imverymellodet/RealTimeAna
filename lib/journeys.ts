@@ -4,6 +4,8 @@ import { rangeStart, rows, type RangeKey } from "@/lib/stats"
 
 export interface VisitorSummary {
   id: string
+  // True when the site identified this person as a signed-in user
+  identified: boolean
   firstSeen: string
   lastSeen: string
   pageviews: number
@@ -34,15 +36,22 @@ export function isVisitorId(value: string) {
   return /^[0-9a-f]{32}$/.test(value)
 }
 
-// Most recently active visitors in the range. A visitor id lasts one day, so
-// each row is one person's activity on one day.
+// Most recently active people in the range. A signed-in user the site identified
+// is one row across days and devices; anyone else is one daily visitor hash.
 export async function listVisitors(siteId: string, range: RangeKey, timeZone: string): Promise<VisitorSummary[]> {
   const from = rangeStart(range, timeZone)
 
-  const data = await rows<Record<string, string | null>>(sql`
-    with seen as (
+  const data = await rows<Record<string, string | boolean | null>>(sql`
+    with views as (
+      select coalesce(i.user_id, p.visitor_id) as person, (i.user_id is not null) as identified, p.*
+      from page_views p
+      left join identities i on i.site_id = p.site_id and i.visitor_id = p.visitor_id
+      where p.site_id = ${siteId} and p.created_at >= ${from}
+    ),
+    seen as (
       select
-        visitor_id,
+        person,
+        bool_or(identified) as identified,
         min(created_at) as first_seen,
         max(created_at) as last_seen,
         count(*) as pageviews,
@@ -55,55 +64,65 @@ export async function listVisitors(siteId: string, range: RangeKey, timeZone: st
         (array_agg(os order by created_at))[1] as os,
         (array_agg(referrer order by created_at))[1] as referrer,
         (array_agg(coalesce(utm_campaign, utm_source) order by created_at))[1] as campaign
-      from page_views
-      where site_id = ${siteId} and created_at >= ${from}
-      group by visitor_id
+      from views
+      group by person
       order by last_seen desc
       limit 30
     ),
     converted as (
-      select visitor_id, count(*) as goals, coalesce(sum(revenue_cents), 0) as revenue
-      from events
-      where site_id = ${siteId} and created_at >= ${from}
-      group by visitor_id
+      select coalesce(i.user_id, e.visitor_id) as person, count(*) as goals, coalesce(sum(e.revenue_cents), 0) as revenue
+      from events e
+      left join identities i on i.site_id = e.site_id and i.visitor_id = e.visitor_id
+      where e.site_id = ${siteId} and e.created_at >= ${from}
+      group by 1
     )
     select seen.*, coalesce(converted.goals, 0) as goals, coalesce(converted.revenue, 0) as revenue
     from seen
-    left join converted using (visitor_id)
+    left join converted using (person)
     order by seen.last_seen desc
   `)
 
+  const text = (value: string | boolean | null) => (typeof value === "string" ? value : null)
+
   return data.map((r) => ({
-    id: r.visitor_id!,
-    firstSeen: new Date(r.first_seen!).toISOString(),
-    lastSeen: new Date(r.last_seen!).toISOString(),
+    id: String(r.person),
+    identified: r.identified === true,
+    firstSeen: new Date(String(r.first_seen)).toISOString(),
+    lastSeen: new Date(String(r.last_seen)).toISOString(),
     pageviews: Number(r.pageviews),
     seconds: Number(r.seconds),
-    entryPage: r.entry_page || "/",
-    country: r.country,
-    city: r.city,
-    device: r.device,
-    browser: r.browser,
-    os: r.os,
-    referrer: r.referrer,
-    campaign: r.campaign,
+    entryPage: text(r.entry_page) || "/",
+    country: text(r.country),
+    city: text(r.city),
+    device: text(r.device),
+    browser: text(r.browser),
+    os: text(r.os),
+    referrer: text(r.referrer),
+    campaign: text(r.campaign),
     goals: Number(r.goals),
     revenueCents: Number(r.revenue),
   }))
 }
 
-// Every page view and goal for one visitor, oldest first
-export async function getJourney(siteId: string, visitorId: string): Promise<JourneyStep[]> {
+// Every page view and goal for one person, oldest first. For an identified
+// user this spans every day and device they were identified on.
+export async function getJourney(siteId: string, personId: string): Promise<JourneyStep[]> {
   const data = await rows<Record<string, string | null>>(sql`
-    select 'page' as kind, created_at as at, path as label, duration as seconds, null::int as revenue
-    from page_views
-    where site_id = ${siteId} and visitor_id = ${visitorId}
-    union all
-    select 'goal' as kind, created_at as at, name as label, null::int as seconds, revenue_cents as revenue
-    from events
-    where site_id = ${siteId} and visitor_id = ${visitorId}
+    select *
+    from (
+      select 'page' as kind, p.created_at as at, p.path as label, p.duration as seconds, null::int as revenue
+      from page_views p
+      left join identities i on i.site_id = p.site_id and i.visitor_id = p.visitor_id
+      where p.site_id = ${siteId} and coalesce(i.user_id, p.visitor_id) = ${personId}
+      union all
+      select 'goal' as kind, e.created_at as at, e.name as label, null::int as seconds, e.revenue_cents as revenue
+      from events e
+      left join identities i on i.site_id = e.site_id and i.visitor_id = e.visitor_id
+      where e.site_id = ${siteId} and coalesce(i.user_id, e.visitor_id) = ${personId}
+      order by at desc
+      limit 300
+    ) latest
     order by at
-    limit 300
   `)
 
   return data.map((r) => ({
