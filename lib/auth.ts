@@ -61,6 +61,9 @@ export function getAuth() {
 }
 
 export async function getSessionUser() {
-  const session = await getAuth().api.getSession({ headers: await headers() })
+  // Read the request headers first: this marks the page as dynamic, so `next build`
+  // never tries to prerender it (and never needs a database connection).
+  const requestHeaders = await headers()
+  const session = await getAuth().api.getSession({ headers: requestHeaders })
   return session?.user ?? null
 }
