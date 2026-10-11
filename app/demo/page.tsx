@@ -29,7 +29,11 @@ export default function DemoPage() {
             </Button>
           </p>
         </div>
-        <DashboardView title="acme.dev" subtitle="Sample data" statsUrl="/api/demo/stats" realtimeUrl="/api/demo/realtime" />
+        <DashboardView title="acme.dev" subtitle="Sample data" statsUrl="/api/demo/stats"
+          realtimeUrl="/api/demo/realtime"
+          funnelsUrl="/api/demo/funnels"
+          visitorsUrl="/api/demo/visitors"
+        />
       </main>
       <SiteFooter />
     </>

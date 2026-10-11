@@ -209,6 +209,9 @@ export function DashboardShell({ email, sites: initialSites }: { email: string; 
             subtitle={selected.name === selected.domain ? undefined : selected.domain}
             statsUrl={`/api/sites/${selected.id}/stats`}
             realtimeUrl={`/api/sites/${selected.id}/realtime`}
+            funnelsUrl={`/api/sites/${selected.id}/funnels`}
+            canEditFunnels
+            visitorsUrl={`/api/sites/${selected.id}/visitors`}
             emptyState={<InstallPanel siteId={selected.id} domain={selected.domain} />}
           />
         ) : (

@@ -1,4 +1,4 @@
-import { ArrowRight, Bot, Cookie, Feather, Globe2, Link2, Share2, Target } from "lucide-react"
+import { ArrowRight, Bot, Cookie, Feather, Globe2, Link2, Route, Share2, Target } from "lucide-react"
 import Link from "next/link"
 import { DashboardView } from "@/components/analytics/dashboard-view"
 import { LiveDot } from "@/components/brand"
@@ -39,6 +39,12 @@ const FEATURES = [
     title: "1.5 KB script",
     body: "One deferred script tag, about 1.5 KB gzipped. It works with single-page apps out of the box.",
     span: "",
+  },
+  {
+    icon: Route,
+    title: "Funnels and journeys",
+    body: "Define the steps to a sale and see where people drop off. Open any anonymous visitor to follow the pages and goals of their visit.",
+    span: "md:col-span-2",
   },
   {
     icon: Share2,
@@ -154,6 +160,8 @@ export default function Home() {
                 subtitle="This is the actual dashboard, shown with sample data"
                 statsUrl="/api/demo/stats"
                 realtimeUrl="/api/demo/realtime"
+                funnelsUrl="/api/demo/funnels"
+                visitorsUrl="/api/demo/visitors"
               />
             </div>
           </div>
@@ -218,6 +226,7 @@ export default function Home() {
                 <li>{BETA_PLAN.siteLimit} websites</li>
                 <li>Live visitors, sources, pages, countries and devices</li>
                 <li>Goals, conversion rate and revenue by channel</li>
+                <li>Funnels and visitor journeys</li>
                 <li>Public dashboard links</li>
               </ul>
               <Button asChild className="mt-8 w-full bg-brand text-brand-foreground hover:bg-brand/90">

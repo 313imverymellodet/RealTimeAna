@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { Area, Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { ArrowDownRight, ArrowUpRight } from "lucide-react"
 import Link from "next/link"
@@ -9,6 +9,10 @@ import { Globe } from "@/components/globe"
 import { countryFlag, countryName, formatDuration, formatMoney, formatNumber, percentChange } from "@/lib/format"
 import type { BreakdownRow, RangeKey, Realtime, Stats } from "@/lib/stats"
 import { cn } from "@/lib/utils"
+import { FunnelPanel } from "./funnel-panel"
+import { Panel, Segmented } from "./primitives"
+import { usePolling } from "./use-polling"
+import { VisitorsPanel } from "./visitors-panel"
 
 const RANGE_OPTIONS: { value: RangeKey; label: string }[] = [
   { value: "today", label: "Today" },
@@ -27,104 +31,16 @@ interface DashboardViewProps {
   // Shown in place of the charts while the site has never received a page view
   emptyState?: ReactNode
   headerExtra?: ReactNode
-}
-
-// Polls a JSON endpoint. Keeps the last good value on screen while refreshing.
-// `nextDelay` picks the wait before the next request from the latest data.
-function usePolling<T>(url: string, nextDelay: (data: T | null) => number) {
-  const [state, setState] = useState<{ url: string; data: T | null; failed: boolean }>({
-    url,
-    data: null,
-    failed: false,
-  })
-  const delayRef = useRef(nextDelay)
-
-  useEffect(() => {
-    delayRef.current = nextDelay
-  }, [nextDelay])
-
-  useEffect(() => {
-    let cancelled = false
-    let timer: ReturnType<typeof setTimeout>
-
-    let loaded = false
-
-    const load = async () => {
-      let data: T | null = null
-      // Always make the first request; after that, skip refreshes while the tab is in the background
-      if (!loaded || document.visibilityState === "visible") {
-        try {
-          const response = await fetch(url, { cache: "no-store" })
-          if (!response.ok) throw new Error(String(response.status))
-          data = (await response.json()) as T
-          loaded = true
-          if (!cancelled) setState({ url, data, failed: false })
-        } catch {
-          if (!cancelled) setState((prev) => ({ url, data: prev.url === url ? prev.data : null, failed: true }))
-        }
-      }
-      if (!cancelled) timer = setTimeout(load, delayRef.current(data))
-    }
-
-    load()
-
-    return () => {
-      cancelled = true
-      clearTimeout(timer)
-    }
-  }, [url])
-
-  // Data fetched for a different URL (e.g. the previous range) is stale
-  const current = state.url === url ? state : { data: null, failed: false }
-  return { data: current.data, failed: current.failed, loading: current.data === null && !current.failed }
+  // Funnels are shown when a URL is given; `canEditFunnels` adds create and delete
+  funnelsUrl?: string
+  canEditFunnels?: boolean
+  // Individual visitor journeys (owner and demo only; never on public links)
+  visitorsUrl?: string
 }
 
 // Check every few seconds until the first page view arrives, then once a minute
 const statsDelay = (stats: Stats | null) => (stats && !stats.hasData ? 4_000 : 60_000)
 const realtimeDelay = () => 10_000
-
-function Panel({ title, action, children, className }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) {
-  return (
-    <section className={cn("rounded-2xl border border-border bg-card/60", className)}>
-      <header className="flex h-12 items-center justify-between gap-3 border-b border-border/70 px-4">
-        <h2 className="text-sm font-medium">{title}</h2>
-        {action}
-      </header>
-      <div className="p-2">{children}</div>
-    </section>
-  )
-}
-
-function Segmented<T extends string>({
-  value,
-  onChange,
-  options,
-  label,
-}: {
-  value: T
-  onChange: (value: T) => void
-  options: { value: T; label: string }[]
-  label: string
-}) {
-  return (
-    <div role="group" aria-label={label} className="inline-flex rounded-lg border border-border bg-background p-0.5">
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          aria-pressed={value === option.value}
-          onClick={() => onChange(option.value)}
-          className={cn(
-            "rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring",
-            value === option.value && "bg-secondary text-foreground",
-          )}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 function BarList({
   rows,
@@ -238,7 +154,17 @@ function formatTick(t: string, unit: Stats["unit"]) {
     : date.toLocaleDateString("en", { month: "short", day: "numeric" })
 }
 
-export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptyState, headerExtra }: DashboardViewProps) {
+export function DashboardView({
+  title,
+  subtitle,
+  statsUrl,
+  realtimeUrl,
+  emptyState,
+  headerExtra,
+  funnelsUrl,
+  canEditFunnels = false,
+  visitorsUrl,
+}: DashboardViewProps) {
   const [range, setRange] = useState<RangeKey>("7d")
   const [metric, setMetric] = useState<Metric>("visitors")
   const [deviceTab, setDeviceTab] = useState<"devices" | "browsers" | "systems">("devices")
@@ -246,10 +172,11 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
   const [sourceTab, setSourceTab] = useState<"referrers" | "campaigns">("referrers")
   const [locationTab, setLocationTab] = useState<"countries" | "cities">("countries")
 
-  const statsQuery = useMemo(() => {
+  const query = useMemo(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-    return `${statsUrl}?range=${range}&tz=${encodeURIComponent(tz)}`
-  }, [statsUrl, range])
+    return `?range=${range}&tz=${encodeURIComponent(tz)}`
+  }, [range])
+  const statsQuery = `${statsUrl}${query}`
 
   const { data: stats, loading, failed } = usePolling<Stats>(statsQuery, statsDelay)
   const { data: realtime } = usePolling<Realtime>(realtimeUrl, realtimeDelay)
@@ -597,6 +524,9 @@ export function DashboardView({ title, subtitle, statsUrl, realtimeUrl, emptySta
               <BarList rows={stats?.[deviceTab].slice(0, 6)} loading={loading} empty="No device data yet" />
             </Panel>
           </div>
+
+          {funnelsUrl && <FunnelPanel url={funnelsUrl} query={query} canEdit={canEditFunnels} />}
+          {visitorsUrl && <VisitorsPanel url={visitorsUrl} query={query} />}
         </>
       )}
     </div>

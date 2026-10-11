@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm"
 import {
   boolean,
   date,
+  jsonb,
   doublePrecision,
   index,
   integer,
@@ -164,6 +165,26 @@ export const events = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("events_site_created_idx").on(t.siteId, t.createdAt)],
+)
+
+export interface FunnelStep {
+  // "page" matches a path (a trailing * matches anything after it); "goal" matches a goal name
+  type: "page" | "goal"
+  value: string
+}
+
+export const funnels = pgTable(
+  "funnels",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .notNull()
+      .references(() => sites.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    steps: jsonb("steps").$type<FunnelStep[]>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("funnels_site_idx").on(t.siteId)],
 )
 
 // One random salt per UTC day for visitor hashing. Old rows are deleted, which

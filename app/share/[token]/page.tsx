@@ -31,6 +31,7 @@ export default async function SharedDashboardPage({ params }: { params: Promise<
         subtitle="Public dashboard"
         statsUrl={`/api/share/${token}/stats`}
         realtimeUrl={`/api/share/${token}/realtime`}
+        funnelsUrl={`/api/share/${token}/funnels`}
       />
     </div>
   )

@@ -51,6 +51,7 @@ const SECTIONS = [
   { id: "frameworks", label: "Framework guides" },
   { id: "verify", label: "Check it works" },
   { id: "goals", label: "Goals and revenue" },
+  { id: "funnels", label: "Funnels and journeys" },
   { id: "data", label: "What we collect" },
   { id: "sharing", label: "Public dashboards" },
 ]
@@ -168,6 +169,24 @@ export default function DocsPage() {
               Revenue is the amount your site reports, so send it from your confirmation page or after a successful
               payment. Tag links with <code className="font-mono text-foreground">?utm_campaign=name</code> or{" "}
               <code className="font-mono text-foreground">?ref=name</code> to see campaigns.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <Heading id="funnels">Funnels and journeys</Heading>
+            <p className="text-muted-foreground">
+              A funnel is an ordered list of two to six steps, each a page or a goal. Create one from the Funnels panel
+              on your dashboard. A page step ending in <code className="font-mono text-foreground">*</code> matches
+              everything under it, so <code className="font-mono text-foreground">/blog/*</code> covers every post.
+            </p>
+            <p className="text-muted-foreground">
+              The Visitor journeys panel lists recent anonymous visitors. Open one to see the pages they viewed and the
+              goals they completed, in order, with where they came from.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Because a visitor is only recognised for one day, funnels and journeys cover what a person does within a
+              single day. Someone who signs up today and buys next week appears as two separate visitors. Journeys are
+              visible only to you, never on a public dashboard link.
             </p>
           </section>
 

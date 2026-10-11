@@ -72,7 +72,12 @@ export interface Realtime {
   points: { lat: number; lng: number; city: string | null; country: string | null }[]
 }
 
-async function rows<T>(query: SQL): Promise<T[]> {
+// Start of a range in the viewer's time zone, as a SQL timestamp expression
+export function rangeStart(range: RangeKey, timeZone: string): SQL {
+  return sql`(date_trunc('day', now() at time zone ${timeZone}) - make_interval(days => ${RANGES[range].days - 1}::int)) at time zone ${timeZone}`
+}
+
+export async function rows<T>(query: SQL): Promise<T[]> {
   const result = await getDb().execute(query)
   return result.rows as T[]
 }
