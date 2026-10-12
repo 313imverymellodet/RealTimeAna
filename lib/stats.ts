@@ -76,6 +76,10 @@ export interface Seat {
   // Short anonymous key, stable for the visitor's day, used to keep them in the same seat
   id: string
   channel: string
+  // Where they came from, what they are reading and their country, for the seat's tooltip
+  source: string | null
+  path: string
+  country: string | null
 }
 
 export interface Arrival {
@@ -374,8 +378,10 @@ export async function getRealtime(siteId: string): Promise<Realtime> {
       order by visitor_id, created_at desc
       limit 200
     `),
-    rows<{ id: string; channel: string }>(sql`
-      select distinct on (visitor_id) left(visitor_id, 12) as id, coalesce(channel, 'Direct') as channel
+    rows<{ id: string; channel: string; source: string | null; path: string; country: string | null }>(sql`
+      select distinct on (visitor_id)
+        left(visitor_id, 12) as id, coalesce(channel, 'Direct') as channel,
+        coalesce(network, referrer) as source, path, country
       from page_views
       where site_id = ${siteId} and created_at >= now() - interval '5 minutes'
       order by visitor_id, created_at desc

@@ -218,6 +218,11 @@ export function getDemoRealtime(): Realtime {
     // Stable ids so most people keep their seat between refreshes
     id: `demo${String((i * 7919) % 9973).padStart(8, "0")}`,
     channel: mix[(i * 5 + 3) % mix.length],
+    source: { Search: "google.com", Social: ["X", "Facebook", "Reddit"][i % 3], Newsletter: "Sunday newsletter", Referral: "news.google.com", Direct: null }[
+      mix[(i * 5 + 3) % mix.length]
+    ] as string | null,
+    path: ["/", "/news/city-budget-vote", "/membership", "/reviews/best-of-2026", "/"][(i * 3) % 5],
+    country: ["US", "US", "DE", "GB", "CA", "IN"][(i * 7) % 6],
   }))
   const arrivals = points.slice(0, 4).map((point, i) => ({
     at: new Date(Date.now() - (i * 55 + 8) * 1000).toISOString(),
