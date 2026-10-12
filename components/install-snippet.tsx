@@ -33,14 +33,15 @@ export function CodeBlock({ code, className }: { code: string; className?: strin
   }
 
   return (
-    <div className={cn("group relative rounded-2xl border border-border bg-muted", className)}>
-      <pre className="overflow-x-auto p-4 pr-24 font-mono text-[13px] leading-relaxed text-foreground/90">
+    // The button sits beside the code in its own column, so it can never cover the text
+    <div className={cn("flex items-start gap-2 rounded-2xl border border-border bg-muted p-2", className)}>
+      <pre className="min-w-0 flex-1 overflow-x-auto px-2 py-1.5 font-mono text-[13px] leading-relaxed text-foreground/90">
         <code>{code}</code>
       </pre>
       <button
         type="button"
         onClick={copy}
-        className="absolute top-2.5 right-2.5 flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-ring"
+        className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-ring"
       >
         {copied ? <Check className="size-3.5 text-brand" /> : <Copy className="size-3.5" />}
         <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
