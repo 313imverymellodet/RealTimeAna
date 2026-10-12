@@ -43,7 +43,7 @@ export function Globe({ points, className }: { points: GlobePoint[]; className?:
       mapSamples: 16000,
       mapBrightness: 1.6,
       baseColor: [1, 1, 1],
-      markerColor: [0, 0.44, 0.89],
+      markerColor: [0.96, 0.6, 0.1],
       glowColor: [0.94, 0.94, 0.96],
       markers: markers(),
       markerElevation: 0,

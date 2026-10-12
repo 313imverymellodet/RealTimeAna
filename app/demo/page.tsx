@@ -33,6 +33,7 @@ export default function DemoPage() {
           realtimeUrl="/api/demo/realtime"
           funnelsUrl="/api/demo/funnels"
           visitorsUrl="/api/demo/visitors"
+          siteDomain="northsidepost.example"
         />
       </main>
       <SiteFooter />

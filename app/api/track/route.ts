@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto"
 import { and, desc, eq, gte, sql } from "drizzle-orm"
 import { type NextRequest, NextResponse } from "next/server"
+import { classifySource } from "@/lib/channels"
 import { getDb, schema } from "@/lib/db"
 import { getClientIp, lookupGeo } from "@/lib/geo"
 import { getPlan } from "@/lib/plans"
@@ -144,6 +145,8 @@ export async function POST(request: NextRequest) {
         utmSource: schema.pageViews.utmSource,
         utmMedium: schema.pageViews.utmMedium,
         utmCampaign: schema.pageViews.utmCampaign,
+        channel: schema.pageViews.channel,
+        network: schema.pageViews.network,
         country: schema.pageViews.country,
       })
       .from(schema.pageViews)
@@ -169,6 +172,8 @@ export async function POST(request: NextRequest) {
         referrer: recent?.referrer ?? null,
         utmSource: recent?.utmSource ?? null,
         utmCampaign: recent?.utmCampaign ?? null,
+        channel: recent?.channel ?? "Direct",
+        network: recent?.network ?? null,
         country: recent?.country ?? lookupGeo(request.headers, ip).country,
       })
       return json({ success: true })
@@ -194,6 +199,15 @@ export async function POST(request: NextRequest) {
     const geo = lookupGeo(request.headers, ip)
     const agent = parseUserAgent(userAgent)
 
+    // A new session is classified by how it arrived; later pages keep that answer
+    const referrer = recent ? recent.referrer : referrerHost(body.referrer, site.domain)
+    const utmSource = recent ? recent.utmSource : shortText(body.utmSource)
+    const utmMedium = recent ? recent.utmMedium : shortText(body.utmMedium)
+    const arrival =
+      recent && recent.channel
+        ? { channel: recent.channel, network: recent.network }
+        : classifySource(referrer, utmSource, utmMedium)
+
     await db
       .insert(schema.pageViews)
       .values({
@@ -203,10 +217,12 @@ export async function POST(request: NextRequest) {
         sessionId: recent?.sessionId ?? randomUUID(),
         path,
         // Later pages in a session keep the source the session started from
-        referrer: recent ? recent.referrer : referrerHost(body.referrer, site.domain),
-        utmSource: recent ? recent.utmSource : shortText(body.utmSource),
-        utmMedium: recent ? recent.utmMedium : shortText(body.utmMedium),
+        referrer,
+        utmSource,
+        utmMedium,
         utmCampaign: recent ? recent.utmCampaign : shortText(body.utmCampaign),
+        channel: arrival.channel,
+        network: arrival.network,
         ...geo,
         ...agent,
       })

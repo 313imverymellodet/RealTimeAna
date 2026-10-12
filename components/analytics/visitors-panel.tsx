@@ -55,7 +55,11 @@ function Journey({ url, visitor }: { url: string; visitor: VisitorSummary }) {
 
   return (
     <div className="space-y-5 px-4 pb-6">
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl border border-border bg-card p-4 text-sm">
+      <p className="-mb-2 flex items-center justify-between rounded-t-2xl bg-brand/15 px-4 py-2 text-[11px] font-semibold tracking-[0.16em] text-brand-ink uppercase">
+        Admit one
+        <span className="font-mono tracking-normal normal-case">{visitor.id.slice(0, 8)}</span>
+      </p>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-b-2xl border border-t-0 border-dashed border-border bg-card p-4 text-sm">
         {[
           ["Location", `${visitor.country ? countryFlag(visitor.country) : "🌐"} ${place(visitor)}`],
           ["Device", [visitor.device, visitor.browser, visitor.os].filter(Boolean).join(" · ") || "Unknown"],
@@ -152,7 +156,7 @@ export function VisitorsPanel({ url, query }: { url: string; query: string }) {
                           {formatMoney(visitor.revenueCents)}
                         </span>
                       ) : visitor.goals > 0 ? (
-                        <span className="shrink-0 rounded-full bg-brand/15 px-2 py-0.5 text-[11px] text-brand">
+                        <span className="shrink-0 rounded-full bg-brand/15 px-2 py-0.5 text-[11px] text-brand-ink">
                           Converted
                         </span>
                       ) : null}
@@ -163,7 +167,7 @@ export function VisitorsPanel({ url, query }: { url: string; query: string }) {
                       <span className="font-mono">{visitor.entryPage}</span>
                     </span>
                   </span>
-                  <span className="tabular hidden shrink-0 text-right text-xs text-muted-foreground sm:block">
+                  <span className="tabular hidden shrink-0 border-l border-dashed border-border py-0.5 pl-4 text-right text-xs text-muted-foreground sm:block">
                     {visitor.pageviews} {visitor.pageviews === 1 ? "page" : "pages"}
                     <span className="block">{timeAgo(visitor.lastSeen)}</span>
                   </span>

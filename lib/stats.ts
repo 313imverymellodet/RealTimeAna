@@ -54,8 +54,14 @@ export interface Stats {
   totals: Totals
   previous: Totals
   series: { t: string; visitors: number; pageviews: number; revenue: number }[]
+  // Busiest single day in the past year, for the "house record"
+  record: { visitors: number; day: string } | null
+  // Distinct visitors so far today
+  today: number
   pages: BreakdownRow[]
   entryPages: BreakdownRow[]
+  channels: BreakdownRow[]
+  networks: BreakdownRow[]
   referrers: BreakdownRow[]
   campaigns: BreakdownRow[]
   countries: BreakdownRow[]
@@ -66,10 +72,29 @@ export interface Stats {
   systems: BreakdownRow[]
 }
 
+export interface Seat {
+  // Short anonymous key, stable for the visitor's day, used to keep them in the same seat
+  id: string
+  channel: string
+}
+
+export interface Arrival {
+  at: string
+  channel: string
+  source: string | null
+  city: string | null
+  country: string | null
+  path: string
+}
+
 export interface Realtime {
   visitors: number
   pages: { label: string; visitors: number }[]
   points: { lat: number; lng: number; city: string | null; country: string | null }[]
+  // One per person on the site in the last 5 minutes
+  seats: Seat[]
+  // The most recent sessions to start, newest first
+  arrivals: Arrival[]
 }
 
 // Start of a range in the viewer's time zone, as a SQL timestamp expression
@@ -125,11 +150,11 @@ async function totals(siteId: string, from: SQL, to: SQL): Promise<Totals> {
 }
 
 // Revenue per value of an attribution column on the events table
-async function revenueBy(siteId: string, from: SQL, column: SQL): Promise<Map<string, number>> {
+async function revenueBy(siteId: string, from: SQL, column: SQL, filter: SQL = sql`true`): Promise<Map<string, number>> {
   const data = await rows<{ label: string; revenue: string }>(sql`
     select ${column} as label, coalesce(sum(revenue_cents), 0) as revenue
     from events
-    where site_id = ${siteId} and created_at >= ${from} and revenue_cents is not null
+    where site_id = ${siteId} and created_at >= ${from} and revenue_cents is not null and ${filter}
     group by 1
   `)
   return new Map(data.map((r) => [r.label, Number(r.revenue)]))
@@ -170,6 +195,9 @@ export async function getStats(siteId: string, range: RangeKey, timeZone: string
   const referrerColumn = sql`coalesce(referrer, 'Direct / none')`
   const campaignColumn = sql`coalesce(utm_campaign, utm_source)`
   const countryColumn = sql`coalesce(country, 'Unknown')`
+  const channelColumn = sql`coalesce(channel, 'Direct')`
+  const networkColumn = sql`coalesce(network, referrer, 'Other')`
+  const isSocial = sql`channel = 'Social'`
 
   const [
     current,
@@ -189,6 +217,12 @@ export async function getStats(siteId: string, range: RangeKey, timeZone: string
     referrerRevenue,
     campaignRevenue,
     countryRevenue,
+    channels,
+    networks,
+    channelRevenue,
+    networkRevenue,
+    record,
+    today,
   ] = await Promise.all([
     totals(siteId, from, now),
     totals(siteId, previousFrom, from),
@@ -261,6 +295,25 @@ export async function getStats(siteId: string, range: RangeKey, timeZone: string
     revenueBy(siteId, from, referrerColumn),
     revenueBy(siteId, from, sql`coalesce(${campaignColumn}, '')`),
     revenueBy(siteId, from, countryColumn),
+    breakdown(siteId, from, channelColumn),
+    breakdown(siteId, from, networkColumn, 8, isSocial),
+    revenueBy(siteId, from, channelColumn),
+    revenueBy(siteId, from, networkColumn, isSocial),
+    rows<{ day: string; visitors: string }>(sql`
+      select to_char(date_trunc('day', created_at at time zone ${timeZone}), 'YYYY-MM-DD') as day,
+             count(distinct visitor_id) as visitors
+      from page_views
+      where site_id = ${siteId} and created_at >= now() - interval '365 days'
+      group by 1
+      order by visitors desc, day desc
+      limit 1
+    `),
+    rows<{ visitors: string }>(sql`
+      select count(distinct visitor_id) as visitors
+      from page_views
+      where site_id = ${siteId}
+        and created_at >= date_trunc('day', now() at time zone ${timeZone}) at time zone ${timeZone}
+    `),
   ])
 
   return {
@@ -275,8 +328,12 @@ export async function getStats(siteId: string, range: RangeKey, timeZone: string
       pageviews: Number(r.pageviews),
       revenue: Number(r.revenue) / 100,
     })),
+    record: record[0] ? { visitors: Number(record[0].visitors), day: record[0].day } : null,
+    today: Number(today[0]?.visitors ?? 0),
     pages,
     entryPages,
+    channels: withRevenue(channels, channelRevenue),
+    networks: withRevenue(networks, networkRevenue),
     referrers: withRevenue(referrers, referrerRevenue),
     campaigns: withRevenue(campaigns, campaignRevenue),
     countries: withRevenue(countries, countryRevenue),
@@ -294,7 +351,7 @@ export async function getStats(siteId: string, range: RangeKey, timeZone: string
 }
 
 export async function getRealtime(siteId: string): Promise<Realtime> {
-  const [[count], pages, points] = await Promise.all([
+  const [[count], pages, points, seats, arrivals] = await Promise.all([
     rows<{ visitors: string }>(sql`
       select count(distinct visitor_id) as visitors
       from page_views
@@ -317,11 +374,34 @@ export async function getRealtime(siteId: string): Promise<Realtime> {
       order by visitor_id, created_at desc
       limit 200
     `),
+    rows<{ id: string; channel: string }>(sql`
+      select distinct on (visitor_id) left(visitor_id, 12) as id, coalesce(channel, 'Direct') as channel
+      from page_views
+      where site_id = ${siteId} and created_at >= now() - interval '5 minutes'
+      order by visitor_id, created_at desc
+      limit 400
+    `),
+    // Sessions whose first page view happened in the last 5 minutes
+    rows<{ at: string; channel: string; source: string | null; city: string | null; country: string | null; path: string }>(sql`
+      select created_at as at, channel, source, city, country, path
+      from (
+        select distinct on (session_id)
+          created_at, coalesce(channel, 'Direct') as channel, coalesce(network, referrer) as source, city, country, path
+        from page_views
+        where site_id = ${siteId} and created_at >= now() - interval '40 minutes'
+        order by session_id, created_at
+      ) starts
+      where created_at >= now() - interval '5 minutes'
+      order by created_at desc
+      limit 5
+    `),
   ])
 
   return {
     visitors: Number(count.visitors),
     pages: pages.map((p) => ({ label: p.label, visitors: Number(p.visitors) })),
     points,
+    seats,
+    arrivals: arrivals.map((a) => ({ ...a, at: new Date(a.at).toISOString() })),
   }
 }

@@ -43,7 +43,7 @@ export function CodeBlock({ code, className }: { code: string; className?: strin
         onClick={copy}
         className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-ring"
       >
-        {copied ? <Check className="size-3.5 text-brand" /> : <Copy className="size-3.5" />}
+        {copied ? <Check className="size-3.5 text-brand-ink" /> : <Copy className="size-3.5" />}
         <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
       </button>
     </div>

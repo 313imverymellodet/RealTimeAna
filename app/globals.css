@@ -23,13 +23,15 @@
   --destructive-foreground: #ffffff;
   --border: #e3e3e8;
   --input: #d2d2d7;
-  --ring: #0071e3;
-  --brand: #0071e3;
-  --brand-foreground: #ffffff;
-  --revenue: #c2410c;
+  --ring: #f5a623;
+  /* House lights: amber for fills, a darker ink where amber is used as text */
+  --brand: #f5a623;
+  --brand-ink: #9a5b00;
+  --brand-foreground: #1d1d1f;
+  --revenue: #0f7b6c;
   --success: #1a8f3c;
   --warning: #b25000;
-  --chart-1: #0071e3;
+  --chart-1: #f5a623;
   --chart-2: #1a8f3c;
   --chart-3: #c2410c;
   --chart-4: #af52de;
@@ -42,7 +44,7 @@
   --sidebar-accent: #e8e8ed;
   --sidebar-accent-foreground: #1d1d1f;
   --sidebar-border: #e3e3e8;
-  --sidebar-ring: #0071e3;
+  --sidebar-ring: #f5a623;
 }
 
 @theme inline {
@@ -51,6 +53,7 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-brand-ink: var(--brand-ink);
   --color-revenue: var(--revenue);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -126,10 +129,50 @@
     mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 100%);
   }
   .glow-brand {
-    background: radial-gradient(ellipse 50% 40% at 50% 0%, rgb(0 113 227 / 0.08), transparent 70%);
+    background: radial-gradient(ellipse 50% 40% at 50% 0%, rgb(245 166 35 / 0.14), transparent 70%);
+  }
+  /* A row of bulbs along the bottom edge, like a theatre marquee */
+  .marquee {
+    background:
+      radial-gradient(circle at 6px 100%, var(--brand) 2.5px, transparent 3px) 0 100% / 14px 7px repeat-x,
+      linear-gradient(to bottom, rgb(245 166 35 / 0.1), rgb(245 166 35 / 0.04));
+    padding-bottom: 0.9rem;
+  }
+  .seat-arrive {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: seat-arrive 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  }
+  .arrival {
+    animation: arrival 0.5s ease-out both;
   }
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes seat-arrive {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes arrival {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

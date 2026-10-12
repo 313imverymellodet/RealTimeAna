@@ -126,6 +126,9 @@ export const pageViews = pgTable(
     utmSource: text("utm_source"),
     utmMedium: text("utm_medium"),
     utmCampaign: text("utm_campaign"),
+    // Search, Social, Newsletter, ... and the social network, set when the session starts
+    channel: text("channel"),
+    network: text("network"),
     country: text("country"),
     region: text("region"),
     city: text("city"),
@@ -162,6 +165,8 @@ export const events = pgTable(
     referrer: text("referrer"),
     utmSource: text("utm_source"),
     utmCampaign: text("utm_campaign"),
+    channel: text("channel"),
+    network: text("network"),
     country: text("country"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

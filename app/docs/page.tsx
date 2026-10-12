@@ -49,11 +49,14 @@ const GOAL_HTML = `<button data-housecount-goal="newsletter signup">Subscribe</b
 const IDENTIFY_JS = `// Run on every page while a member is signed in
 window.housecount?.identify("member_8142")`
 
+const TRACKED_LINK = "https://yoursite.com/news/my-story?utm_source=x&utm_medium=social&utm_campaign=budget-vote-thread"
+
 const SECTIONS = [
   { id: "install", label: "Install" },
   { id: "frameworks", label: "Framework guides" },
   { id: "verify", label: "Check it works" },
   { id: "goals", label: "Subscribers and revenue" },
+  { id: "social", label: "Social and tracked links" },
   { id: "funnels", label: "Funnels and journeys" },
   { id: "identify", label: "Follow members" },
   { id: "data", label: "What we collect" },
@@ -182,6 +185,25 @@ export default function DocsPage() {
           </section>
 
           <section className="space-y-4">
+            <Heading id="social">Social and tracked links</Heading>
+            <p className="text-muted-foreground">
+              Every visit is sorted into a channel: Search, Social, Newsletter, Paid, Referral or Direct. The Sources
+              panel shows readers, signups and revenue for each, and the Social tab breaks that down by network.
+            </p>
+            <p className="text-muted-foreground">
+              Apps and email clients often hide where a reader came from, so those visits can show up as Direct. A
+              tracked link fixes that. In the Sources panel choose <span className="text-foreground">Make a tracked
+              link</span>, pick the page and the network, and post the link it gives you:
+            </p>
+            <CodeBlock code={TRACKED_LINK} />
+            <p className="text-sm text-muted-foreground">
+              Give each post its own name and the Post tab shows what that one post brought in. Housecount measures
+              the readers a post sends to your site. It does not read follower counts, likes or impressions from the
+              networks themselves.
+            </p>
+          </section>
+
+          <section className="space-y-4">
             <Heading id="funnels">Funnels and journeys</Heading>
             <p className="text-muted-foreground">
               A funnel is an ordered list of two to six steps, each a page or a goal. Create one from the Funnels panel
@@ -245,7 +267,8 @@ export default function DocsPage() {
             <Heading id="sharing">Open house</Heading>
             <p className="text-muted-foreground">
               In Settings, turn on <span className="text-foreground">Public dashboard</span> for a website to get a
-              read-only link to your numbers, useful for sponsors and advertisers. Visitor journeys are never included.
+              read-only link to your numbers, useful for sponsors and advertisers, and a weekly house card image you
+              can post. Visitor journeys are never included.
               Turn it off and the link stops working immediately.
             </p>
           </section>

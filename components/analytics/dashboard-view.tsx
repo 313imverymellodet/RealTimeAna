@@ -6,10 +6,13 @@ import { ArrowDownRight, ArrowUpRight } from "lucide-react"
 import Link from "next/link"
 import { LiveDot } from "@/components/brand"
 import { Globe } from "@/components/globe"
+import { channelColor } from "@/lib/channels"
 import { countryFlag, countryName, formatDuration, formatMoney, formatNumber, percentChange } from "@/lib/format"
 import type { BreakdownRow, RangeKey, Realtime, Stats } from "@/lib/stats"
 import { cn } from "@/lib/utils"
 import { FunnelPanel } from "./funnel-panel"
+import { HousePanel } from "./house-panel"
+import { LinkBuilder } from "./link-builder"
 import { Panel, Segmented } from "./primitives"
 import { usePolling } from "./use-polling"
 import { VisitorsPanel } from "./visitors-panel"
@@ -36,6 +39,8 @@ interface DashboardViewProps {
   canEditFunnels?: boolean
   // Individual visitor journeys (owner and demo only; never on public links)
   visitorsUrl?: string
+  // The site's domain; turns on the tracked-link builder
+  siteDomain?: string
 }
 
 // Check every few seconds until the first page view arrives, then once a minute
@@ -164,12 +169,13 @@ export function DashboardView({
   funnelsUrl,
   canEditFunnels = false,
   visitorsUrl,
+  siteDomain,
 }: DashboardViewProps) {
   const [range, setRange] = useState<RangeKey>("7d")
   const [metric, setMetric] = useState<Metric>("visitors")
-  const [deviceTab, setDeviceTab] = useState<"devices" | "browsers" | "systems">("devices")
   const [pageTab, setPageTab] = useState<"pages" | "entryPages">("pages")
-  const [sourceTab, setSourceTab] = useState<"referrers" | "campaigns">("referrers")
+  const [sourceTab, setSourceTab] = useState<"channels" | "networks" | "referrers" | "campaigns">("channels")
+  const [linking, setLinking] = useState(false)
   const [locationTab, setLocationTab] = useState<"countries" | "cities">("countries")
 
   const query = useMemo(() => {
@@ -196,7 +202,7 @@ export function DashboardView({
           <span className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium">
             <LiveDot />
             <span className="tabular">{formatNumber(online)}</span>
-            <span className="text-muted-foreground">online now</span>
+            <span className="text-muted-foreground">in the house</span>
           </span>
           {headerExtra}
           <Segmented value={range} onChange={setRange} options={RANGE_OPTIONS} label="Date range" />
@@ -213,6 +219,8 @@ export function DashboardView({
         emptyState
       ) : (
         <>
+          <HousePanel realtime={realtime} stats={stats} />
+
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
             <StatTile
               label="Visitors"
@@ -386,8 +394,10 @@ export function DashboardView({
                   onChange={setSourceTab}
                   label="Source breakdown"
                   options={[
-                    { value: "referrers", label: "Referrer" },
-                    { value: "campaigns", label: "Campaign" },
+                    { value: "channels", label: "Channel" },
+                    { value: "networks", label: "Social" },
+                    { value: "referrers", label: "Site" },
+                    { value: "campaigns", label: "Post" },
                   ]}
                 />
               }
@@ -397,10 +407,35 @@ export function DashboardView({
                 loading={loading}
                 empty={
                   sourceTab === "campaigns"
-                    ? "No campaign visits yet. Add ?utm_campaign=name or ?ref=name to your links."
-                    : "No visits in this period"
+                    ? "No tagged posts yet. Share a tracked link to see what each post brings in."
+                    : sourceTab === "networks"
+                      ? "No readers from social networks in this period"
+                      : "No visits in this period"
+                }
+                renderLabel={
+                  sourceTab === "channels"
+                    ? (label) => (
+                        <span className="flex items-center gap-2">
+                          <span className="size-2 rounded-full" style={{ background: channelColor(label) }} aria-hidden />
+                          {label}
+                        </span>
+                      )
+                    : undefined
                 }
               />
+              {siteDomain && (
+                <p className="border-t border-border/60 px-2 pt-2.5 pb-1 text-xs text-muted-foreground">
+                  Posting a story?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setLinking(true)}
+                    className="font-medium text-brand-ink underline-offset-4 hover:underline"
+                  >
+                    Make a tracked link
+                  </button>{" "}
+                  to see what that post brings in.
+                </p>
+              )}
             </Panel>
 
             <Panel title="Goals">
@@ -427,7 +462,7 @@ export function DashboardView({
                   <tbody className="tabular">
                     {stats.goals.map((goal) => (
                       <tr key={goal.name} className="border-t border-border/60">
-                        <td className="max-w-0 truncate px-2 py-2 font-medium">{goal.name}</td>
+                        <td className="px-2 py-2 font-medium">{goal.name}</td>
                         <td className="px-2 py-2 text-right font-mono text-xs">{formatNumber(goal.completions)}</td>
                         <td className="px-2 py-2 text-right font-mono text-xs text-muted-foreground">
                           {stats.totals.visitors > 0
@@ -454,27 +489,6 @@ export function DashboardView({
               )}
             </Panel>
 
-            <Panel title="Live visitors" className="overflow-hidden">
-              <div className="grid items-center gap-2 sm:grid-cols-2">
-                <Globe points={realtime?.points ?? []} className="mx-auto max-w-[240px]" />
-                <div className="p-2">
-                  <p className="tabular text-4xl font-semibold tracking-tight">{formatNumber(online)}</p>
-                  <p className="text-sm text-muted-foreground">visitors in the last 5 minutes</p>
-                  <ul className="mt-4 space-y-1.5">
-                    {(realtime?.pages ?? []).map((page) => (
-                      <li key={page.label} className="flex items-center justify-between gap-3 text-sm">
-                        <span className="min-w-0 truncate font-mono text-[13px]">{page.label}</span>
-                        <span className="tabular shrink-0 font-mono text-xs text-muted-foreground">{page.visitors}</span>
-                      </li>
-                    ))}
-                    {realtime && realtime.pages.length === 0 && (
-                      <li className="text-sm text-muted-foreground">Nobody is on the site right now.</li>
-                    )}
-                  </ul>
-                </div>
-              </div>
-            </Panel>
-
             <Panel
               title="Locations"
               action={
@@ -489,44 +503,47 @@ export function DashboardView({
                 />
               }
             >
-              <BarList
-                rows={stats?.[locationTab].slice(0, 6)}
-                loading={loading}
-                empty="No location data yet"
-                renderLabel={(label) =>
-                  locationTab === "countries" ? (
-                    <span className="flex items-center gap-2">
-                      <span aria-hidden>{countryFlag(label)}</span>
-                      {countryName(label)}
-                    </span>
-                  ) : (
-                    label
-                  )
-                }
-              />
+              <div className="grid items-center gap-2 sm:grid-cols-[150px_1fr]">
+                <Globe points={realtime?.points ?? []} className="mx-auto hidden max-w-[150px] sm:block" />
+                <BarList
+                  rows={stats?.[locationTab].slice(0, 6)}
+                  loading={loading}
+                  empty="No location data yet"
+                  renderLabel={(label) =>
+                    locationTab === "countries" ? (
+                      <span className="flex items-center gap-2">
+                        <span aria-hidden>{countryFlag(label)}</span>
+                        {countryName(label)}
+                      </span>
+                    ) : (
+                      label
+                    )
+                  }
+                />
+              </div>
             </Panel>
 
-            <Panel
-              title="Devices"
-              action={
-                <Segmented
-                  value={deviceTab}
-                  onChange={setDeviceTab}
-                  label="Device breakdown"
-                  options={[
-                    { value: "devices", label: "Type" },
-                    { value: "browsers", label: "Browser" },
-                    { value: "systems", label: "OS" },
-                  ]}
-                />
-              }
-            >
-              <BarList rows={stats?.[deviceTab].slice(0, 6)} loading={loading} empty="No device data yet" />
+            <Panel title="Devices" className="lg:col-span-2">
+              <div className="grid gap-x-4 gap-y-2 md:grid-cols-3">
+                {(
+                  [
+                    ["Type", stats?.devices],
+                    ["Browser", stats?.browsers],
+                    ["Operating system", stats?.systems],
+                  ] as const
+                ).map(([label, list]) => (
+                  <div key={label}>
+                    <h3 className="px-2 pt-1 pb-1.5 text-xs text-muted-foreground">{label}</h3>
+                    <BarList rows={list?.slice(0, 5)} loading={loading} empty="No data yet" />
+                  </div>
+                ))}
+              </div>
             </Panel>
           </div>
 
           {funnelsUrl && <FunnelPanel url={funnelsUrl} query={query} canEdit={canEditFunnels} />}
           {visitorsUrl && <VisitorsPanel url={visitorsUrl} query={query} />}
+          {siteDomain && <LinkBuilder open={linking} onOpenChange={setLinking} domain={siteDomain} />}
         </>
       )}
     </div>

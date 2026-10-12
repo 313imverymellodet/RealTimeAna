@@ -14,7 +14,7 @@ const FEATURES = [
   {
     icon: Globe2,
     title: "Watch a story land",
-    body: "See how many readers are in the house this minute, which stories they are on and where in the world they are reading from.",
+    body: "Every reader gets a seat. Watch the house fill as a story takes off, see what is showing right now, and know the moment you set a new house record.",
     span: "md:col-span-2",
   },
   {
@@ -26,7 +26,7 @@ const FEATURES = [
   {
     icon: Link2,
     title: "Know what brought them",
-    body: "Every signup is tied back to the link, post or newsletter that started the visit, so you can see which one actually earned subscribers.",
+    body: "Search, social, newsletter or direct: each seat is coloured by how the reader arrived. Tracked links show what every single post on X, Facebook or Bluesky brought in.",
     span: "",
   },
   {
@@ -38,7 +38,7 @@ const FEATURES = [
   {
     icon: Share2,
     title: "Open house",
-    body: "Flip one switch for a read-only link to your numbers. Share it with sponsors, advertisers or your audience.",
+    body: "Flip one switch for a read-only link to your numbers, plus a weekly house card image to post for sponsors and your audience.",
     span: "",
   },
   {
@@ -109,7 +109,7 @@ export default function Home() {
               Free while in beta
             </p>
             <h1 className="mx-auto mt-6 max-w-4xl text-5xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-7xl">
-              Know who&apos;s <span className="text-brand">in the house.</span>
+              Know who&apos;s <span className="text-brand-ink">in the house.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-pretty text-muted-foreground sm:text-2xl sm:leading-snug">
               Live analytics for independent publishers and creators. See who is reading right now, what brought
@@ -164,6 +164,7 @@ export default function Home() {
                 realtimeUrl="/api/demo/realtime"
                 funnelsUrl="/api/demo/funnels"
                 visitorsUrl="/api/demo/visitors"
+                siteDomain="northsidepost.example"
               />
             </div>
           </div>
@@ -181,7 +182,7 @@ export default function Home() {
                   key={feature.title}
                   className={`rounded-[1.75rem] bg-card p-8 ${feature.span}`}
                 >
-                  <span className="flex size-10 items-center justify-center rounded-full bg-brand/10 text-brand">
+                  <span className="flex size-10 items-center justify-center rounded-full bg-brand/10 text-brand-ink">
                     <feature.icon className="size-4.5" />
                   </span>
                   <h3 className="mt-6 text-xl font-semibold tracking-tight">{feature.title}</h3>
@@ -199,7 +200,7 @@ export default function Home() {
             <ol className="mt-14 grid gap-4 md:grid-cols-3">
               {STEPS.map((step, index) => (
                 <li key={step.title} className="rounded-[1.75rem] bg-muted p-8">
-                  <span className="font-mono text-sm text-brand">0{index + 1}</span>
+                  <span className="font-mono text-sm text-brand-ink">0{index + 1}</span>
                   <h3 className="mt-3 text-lg font-medium tracking-tight">{step.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
                 </li>
@@ -219,7 +220,7 @@ export default function Home() {
               </p>
             </div>
             <div className="rounded-[1.75rem] bg-card p-10 shadow-[0_20px_60px_-30px_rgb(0_0_0/0.2)]">
-              <p className="text-sm font-medium text-brand">{BETA_PLAN.name}</p>
+              <p className="text-sm font-medium text-brand-ink">{BETA_PLAN.name}</p>
               <p className="mt-3 text-5xl font-semibold tracking-tight">
                 $0<span className="ml-1 text-base font-normal text-muted-foreground">/ month</span>
               </p>

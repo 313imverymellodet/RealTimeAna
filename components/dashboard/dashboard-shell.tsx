@@ -211,13 +211,14 @@ export function DashboardShell({ email, sites: initialSites }: { email: string; 
             realtimeUrl={`/api/sites/${selected.id}/realtime`}
             funnelsUrl={`/api/sites/${selected.id}/funnels`}
             canEditFunnels
+            siteDomain={selected.domain}
             visitorsUrl={`/api/sites/${selected.id}/visitors`}
             emptyState={<InstallPanel siteId={selected.id} domain={selected.domain} />}
           />
         ) : (
           <div className="mx-auto flex min-h-[70svh] max-w-md flex-col items-center justify-center px-6 text-center">
             <span className="flex size-12 items-center justify-center rounded-3xl border border-border bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)]">
-              <Globe2 className="size-5 text-brand" />
+              <Globe2 className="size-5 text-brand-ink" />
             </span>
             <h1 className="mt-5 text-2xl font-semibold tracking-tight">Add your first website</h1>
             <p className="mt-2 text-sm text-muted-foreground">

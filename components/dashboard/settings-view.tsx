@@ -134,6 +134,19 @@ function SiteRow({ site, onChange, onDelete }: { site: SiteSummary; onChange: (s
         <Switch id={`public-${site.id}`} checked={Boolean(site.publicToken)} onCheckedChange={setPublic} disabled={busy} />
       </div>
       {shareUrl && <CodeBlock code={shareUrl} className="mt-3" />}
+      {shareUrl && (
+        <p className="mt-3 text-sm text-muted-foreground">
+          <a
+            href={`${shareUrl}/card`}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-brand-ink underline-offset-4 hover:underline"
+          >
+            Open this week&apos;s house card
+          </a>{" "}
+          , an image of your week you can post anywhere.
+        </p>
+      )}
     </li>
   )
 }

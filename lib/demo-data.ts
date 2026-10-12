@@ -94,6 +94,30 @@ export function getDemoStats(range: RangeKey): Stats {
       ["/newsletter", 0.05],
       ["/sports/friday-recap", 0.03],
     ]),
+    record: { visitors: 2140, day: series[Math.max(series.length - 4, 0)].t.slice(0, 10) },
+    today: unit === "hour" ? visitors : series[series.length - 1].visitors,
+    channels: share(
+      visitors,
+      [
+        ["Search", 0.29, 0.31],
+        ["Social", 0.26, 0.28],
+        ["Direct", 0.22, 0.14],
+        ["Newsletter", 0.14, 0.21],
+        ["Referral", 0.09, 0.06],
+      ],
+      revenueCents,
+    ),
+    networks: share(
+      visitors,
+      [
+        ["X", 0.11, 0.14],
+        ["Facebook", 0.07, 0.08],
+        ["Reddit", 0.04, 0.03],
+        ["Bluesky", 0.025, 0.02],
+        ["Instagram", 0.015, 0.01],
+      ],
+      revenueCents,
+    ),
     entryPages: share(visitors, [
       ["/", 0.52],
       ["/news/city-budget-vote", 0.21],
@@ -189,9 +213,26 @@ export function getDemoRealtime(): Realtime {
   const points = CITIES.filter(() => random() > 0.35).map(([lat, lng, city, country]) => ({ lat, lng, city, country }))
   const visitors = points.length + Math.floor(random() * 12) + 6
 
+  const mix = ["Search", "Search", "Social", "Social", "Social", "Direct", "Direct", "Newsletter", "Referral"]
+  const seats = Array.from({ length: visitors }, (_, i) => ({
+    // Stable ids so most people keep their seat between refreshes
+    id: `demo${String((i * 7919) % 9973).padStart(8, "0")}`,
+    channel: mix[(i * 5 + 3) % mix.length],
+  }))
+  const arrivals = points.slice(0, 4).map((point, i) => ({
+    at: new Date(Date.now() - (i * 55 + 8) * 1000).toISOString(),
+    channel: mix[(i * 2 + Math.floor(random() * 3)) % mix.length],
+    source: ["google.com", "X", "Sunday newsletter", "Reddit"][i],
+    city: point.city,
+    country: point.country,
+    path: ["/news/city-budget-vote", "/", "/membership", "/reviews/best-of-2026"][i],
+  }))
+
   return {
     visitors,
     points,
+    seats,
+    arrivals,
     pages: [
       { label: "/", visitors: Math.ceil(visitors * 0.45) },
       { label: "/membership", visitors: Math.ceil(visitors * 0.25) },
