@@ -58,14 +58,12 @@ export function AuthForm({ mode, providers, domain }: AuthFormProps) {
   }
 
   return (
-    <main className="relative flex min-h-svh items-center justify-center overflow-hidden p-6">
-      <div className="bg-grid pointer-events-none absolute inset-0" aria-hidden />
-      <div className="glow-brand pointer-events-none absolute inset-0" aria-hidden />
+    <main className="relative flex min-h-svh items-center justify-center overflow-hidden bg-muted p-6">
 
       <div className="relative w-full max-w-sm">
         <Logo className="mb-8 justify-center text-lg" />
 
-        <div className="rounded-2xl border border-border bg-card/80 p-6 backdrop-blur">
+        <div className="rounded-3xl border border-border bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)] p-6 sm:p-8">
           <h1 className="text-xl font-semibold tracking-tight">{isRegister ? "Create your account" : "Welcome back"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isRegister
@@ -131,11 +129,11 @@ export function AuthForm({ mode, providers, domain }: AuthFormProps) {
               )}
             </div>
             {error && (
-              <p role="alert" className="text-sm text-red-400">
+              <p role="alert" className="text-sm text-red-600">
                 {error}
               </p>
             )}
-            <Button type="submit" disabled={pending} className="bg-brand text-brand-foreground hover:bg-brand/90">
+            <Button type="submit" disabled={pending} className="rounded-full bg-brand text-brand-foreground hover:bg-brand/90">
               {pending ? "One moment…" : isRegister ? "Create account" : "Sign in"}
             </Button>
           </form>

@@ -33,7 +33,7 @@ export function CodeBlock({ code, className }: { code: string; className?: strin
   }
 
   return (
-    <div className={cn("group relative rounded-xl border border-border bg-background", className)}>
+    <div className={cn("group relative rounded-2xl border border-border bg-muted", className)}>
       <pre className="overflow-x-auto p-4 pr-24 font-mono text-[13px] leading-relaxed text-foreground/90">
         <code>{code}</code>
       </pre>

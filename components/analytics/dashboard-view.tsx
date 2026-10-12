@@ -75,7 +75,7 @@ function BarList({
         <li key={row.label} className="relative flex h-8 items-center justify-between gap-4 overflow-hidden rounded-md px-2 text-sm">
           <span
             aria-hidden
-            className="absolute inset-y-0 left-0 rounded-md bg-brand/12"
+            className="absolute inset-y-0 left-0 rounded-md bg-brand/10"
             style={{ width: `${Math.max((row.visitors / max) * 100, 2)}%` }}
           />
           <span className="relative min-w-0 truncate">{renderLabel ? renderLabel(row.label) : row.label}</span>
@@ -120,7 +120,7 @@ function StatTile({
       <span
         className={cn(
           "tabular mt-1 flex h-4 items-center gap-0.5 text-xs font-medium",
-          change === null || change === 0 ? "text-muted-foreground" : good ? "text-brand" : "text-red-400",
+          change === null || change === 0 ? "text-muted-foreground" : good ? "text-success" : "text-red-600",
         )}
       >
         {!loading && change !== null && change !== 0 && (
@@ -134,7 +134,7 @@ function StatTile({
   )
 
   const className = cn(
-    "rounded-2xl border bg-card/60 p-4 text-left transition-colors",
+    "rounded-2xl border bg-card p-4 text-left transition-colors",
     selected ? "border-brand/50" : "border-border",
   )
 
@@ -193,7 +193,7 @@ export function DashboardView({
           {subtitle && <p className="truncate text-sm text-muted-foreground">{subtitle}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs font-medium">
+          <span className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium">
             <LiveDot />
             <span className="tabular">{formatNumber(online)}</span>
             <span className="text-muted-foreground">online now</span>
@@ -204,7 +204,7 @@ export function DashboardView({
       </div>
 
       {failed && !stats && (
-        <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">
           Could not load analytics. Retrying automatically.
         </p>
       )}
@@ -257,7 +257,7 @@ export function DashboardView({
             />
           </div>
 
-          <section className="rounded-2xl border border-border bg-card/60 p-4" aria-label={`${metric} over time`}>
+          <section className="rounded-3xl border border-border bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)] p-4" aria-label={`${metric} over time`}>
             {hasRevenue && (
               <p className="mb-2 flex items-center gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">

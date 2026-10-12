@@ -17,11 +17,11 @@ export default async function SharedDashboardPage({ params }: { params: Promise<
   if (!site) notFound()
 
   return (
-    <div className="min-h-svh">
+    <div className="min-h-svh bg-muted">
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Logo />
-          <Button asChild size="sm" className="bg-brand text-brand-foreground hover:bg-brand/90">
+          <Button asChild size="sm" className="rounded-full bg-brand text-brand-foreground hover:bg-brand/90">
             <Link href="/auth/register">Get this for your site</Link>
           </Button>
         </div>

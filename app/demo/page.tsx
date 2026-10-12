@@ -20,11 +20,11 @@ export default function DemoPage() {
   return (
     <>
       <SiteNav />
-      <main id="main">
-        <div className="border-b border-border/60 bg-card/40">
+      <main id="main" className="bg-muted">
+        <div className="border-b border-border/60 bg-background">
           <p className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm text-muted-foreground sm:px-6">
             You are looking at the real dashboard running on sample data.
-            <Button asChild size="sm" className="bg-brand text-brand-foreground hover:bg-brand/90">
+            <Button asChild size="sm" className="rounded-full bg-brand text-brand-foreground hover:bg-brand/90">
               <Link href="/auth/register">Use it on your site</Link>
             </Button>
           </p>

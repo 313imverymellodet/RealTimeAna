@@ -35,7 +35,7 @@ function Avatar({ id }: { id: string }) {
     <span
       aria-hidden
       className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-      style={{ background: `${color}26`, color }}
+      style={{ background: `${color}1f`, color }}
     >
       {visitorNickname(id)
         .split(" ")
@@ -55,7 +55,7 @@ function Journey({ url, visitor }: { url: string; visitor: VisitorSummary }) {
 
   return (
     <div className="space-y-5 px-4 pb-6">
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl border border-border bg-card/60 p-4 text-sm">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl border border-border bg-card p-4 text-sm">
         {[
           ["Location", `${visitor.country ? countryFlag(visitor.country) : "🌐"} ${place(visitor)}`],
           ["Device", [visitor.device, visitor.browser, visitor.os].filter(Boolean).join(" · ") || "Unknown"],

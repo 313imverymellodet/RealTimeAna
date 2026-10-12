@@ -215,7 +215,7 @@ export default function DocsPage() {
 
           <section className="space-y-4">
             <Heading id="data">What we collect</Heading>
-            <dl className="divide-y divide-border rounded-2xl border border-border bg-card/60">
+            <dl className="divide-y divide-border rounded-3xl border border-border bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)]">
               {COLLECTED.map(([term, detail]) => (
                 <div key={term} className="grid gap-1 px-5 py-3.5 sm:grid-cols-[160px_1fr]">
                   <dt className="text-sm font-medium">{term}</dt>

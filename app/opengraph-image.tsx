@@ -15,18 +15,18 @@ export default function OpenGraphImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: 80,
-          background: "#0b0c0e",
-          color: "#f2f2f2",
+          background: "#ffffff",
+          color: "#1d1d1f",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 36, fontWeight: 600 }}>
-          <div style={{ width: 20, height: 20, borderRadius: 20, background: "#4ade80" }} />
+          <div style={{ width: 20, height: 20, borderRadius: 20, background: "#0071e3" }} />
           Pulse
         </div>
         <div style={{ marginTop: 40, fontSize: 84, fontWeight: 600, letterSpacing: -3, lineHeight: 1.05 }}>
           See who&apos;s on your site right now
         </div>
-        <div style={{ marginTop: 28, fontSize: 34, color: "#9ca3af" }}>
+        <div style={{ marginTop: 28, fontSize: 34, color: "#6e6e73" }}>
           Live web analytics. One script tag. No cookies.
         </div>
       </div>

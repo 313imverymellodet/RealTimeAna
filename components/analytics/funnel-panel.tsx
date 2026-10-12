@@ -55,7 +55,7 @@ function FunnelChart({ funnel }: { funnel: FunnelResult }) {
                 </span>
                 <span className="tabular flex shrink-0 items-baseline gap-3 font-mono text-xs">
                   {index > 0 && dropped > 0 && (
-                    <span className="text-red-400">
+                    <span className="text-red-600">
                       −{formatNumber(dropped)} ({percent(dropped, previous)}%)
                     </span>
                   )}
@@ -194,7 +194,7 @@ function NewFunnelDialog({
             </fieldset>
 
             {error && (
-              <p role="alert" className="text-sm text-red-400">
+              <p role="alert" className="text-sm text-red-600">
                 {error}
               </p>
             )}

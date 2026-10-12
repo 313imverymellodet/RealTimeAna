@@ -11,7 +11,7 @@ const ANIMALS = [
   "Lynx", "Marten", "Otter", "Owl", "Panda", "Puffin", "Raven", "Seal", "Stoat", "Tapir", "Wolf", "Wren",
 ]
 
-const COLORS = ["#4ade80", "#38bdf8", "#f59e0b", "#f472b6", "#a78bfa", "#fb7185", "#2dd4bf", "#facc15"]
+const COLORS = ["#1a8f3c", "#0071e3", "#b25000", "#c2255c", "#7c3aed", "#d70015", "#0d9488", "#a16207"]
 
 function part(hash: string, offset: number) {
   return Number.parseInt(hash.slice(offset, offset + 4), 16) || 0

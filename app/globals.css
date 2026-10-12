@@ -4,85 +4,50 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.15 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0 0);
-  --primary: oklch(0.55 0.18 272);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.005 272);
-  --secondary-foreground: oklch(0.15 0 0);
-  --muted: oklch(0.97 0.005 250);
-  --muted-foreground: oklch(0.5 0.01 250);
-  --accent: oklch(0.96 0.01 272);
-  --accent-foreground: oklch(0.15 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.92 0.005 250);
-  --input: oklch(0.92 0.005 250);
-  --ring: oklch(0.55 0.18 272);
-  --chart-1: oklch(0.55 0.18 272);
-  --chart-2: oklch(0.6 0.15 340);
-  --chart-3: oklch(0.6 0.15 200);
-  --chart-4: oklch(0.6 0.15 100);
-  --chart-5: oklch(0.6 0.15 40);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-/* Dark theme - Vercel-inspired dark UI */
-.dark {
-  --background: oklch(0.09 0.005 250);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.13 0.005 250);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.13 0.005 250);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.98 0 0);
-  --primary-foreground: oklch(0.09 0.005 250);
-  --secondary: oklch(0.18 0.005 250);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.18 0.005 250);
-  --muted-foreground: oklch(0.55 0 0);
-  --accent: oklch(0.22 0.005 250);
-  --accent-foreground: oklch(0.95 0 0);
-  --destructive: oklch(0.55 0.2 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.22 0.005 250);
-  --input: oklch(0.22 0.005 250);
-  --ring: oklch(0.55 0.15 250);
-  --chart-1: oklch(0.84 0.17 158);
-  --chart-2: oklch(0.7 0.18 160);
-  --chart-3: oklch(0.75 0.15 45);
-  --chart-4: oklch(0.65 0.2 330);
-  --chart-5: oklch(0.6 0.15 200);
-  --brand: oklch(0.84 0.17 158);
-  --brand-foreground: oklch(0.16 0.03 160);
-  --revenue: oklch(0.82 0.15 80);
-  --success: oklch(0.65 0.2 145);
-  --warning: oklch(0.75 0.18 70);
-  --sidebar: oklch(0.13 0.005 250);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.98 0 0);
-  --sidebar-primary-foreground: oklch(0.09 0.005 250);
-  --sidebar-accent: oklch(0.18 0.005 250);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.22 0.005 250);
-  --sidebar-ring: oklch(0.55 0.15 250);
+  /* Bright theme: white surfaces on a soft grey page, near-black text, one blue accent */
+  --background: #ffffff;
+  --foreground: #1d1d1f;
+  --card: #ffffff;
+  --card-foreground: #1d1d1f;
+  --popover: #ffffff;
+  --popover-foreground: #1d1d1f;
+  --primary: #1d1d1f;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f7;
+  --secondary-foreground: #1d1d1f;
+  --muted: #f5f5f7;
+  --muted-foreground: #6e6e73;
+  --accent: #f5f5f7;
+  --accent-foreground: #1d1d1f;
+  --destructive: #d70015;
+  --destructive-foreground: #ffffff;
+  --border: #e3e3e8;
+  --input: #d2d2d7;
+  --ring: #0071e3;
+  --brand: #0071e3;
+  --brand-foreground: #ffffff;
+  --revenue: #c2410c;
+  --success: #1a8f3c;
+  --warning: #b25000;
+  --chart-1: #0071e3;
+  --chart-2: #1a8f3c;
+  --chart-3: #c2410c;
+  --chart-4: #af52de;
+  --chart-5: #5ac8fa;
+  --radius: 0.875rem;
+  --sidebar: #f5f5f7;
+  --sidebar-foreground: #1d1d1f;
+  --sidebar-primary: #1d1d1f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8e8ed;
+  --sidebar-accent-foreground: #1d1d1f;
+  --sidebar-border: #e3e3e8;
+  --sidebar-ring: #0071e3;
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-  --font-heading: var(--font-geist-sans), system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-geist-sans), system-ui, sans-serif;
+  --font-heading: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
@@ -155,13 +120,13 @@
   /* Faint grid that fades out toward the edges; used behind hero sections */
   .bg-grid {
     background-image:
-      linear-gradient(to right, oklch(1 0 0 / 0.045) 1px, transparent 1px),
-      linear-gradient(to bottom, oklch(1 0 0 / 0.045) 1px, transparent 1px);
+      linear-gradient(to right, rgb(0 0 0 / 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(0 0 0 / 0.035) 1px, transparent 1px);
     background-size: 56px 56px;
     mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 100%);
   }
   .glow-brand {
-    background: radial-gradient(ellipse 50% 40% at 50% 0%, oklch(0.84 0.17 158 / 0.16), transparent 70%);
+    background: radial-gradient(ellipse 50% 40% at 50% 0%, rgb(0 113 227 / 0.08), transparent 70%);
   }
   .tabular {
     font-variant-numeric: tabular-nums;

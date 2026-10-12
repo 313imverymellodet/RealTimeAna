@@ -128,7 +128,7 @@ export function AddSiteDialog({
               required
             />
             {error && (
-              <p id="site-domain-error" role="alert" className="text-sm text-red-400">
+              <p id="site-domain-error" role="alert" className="text-sm text-red-600">
                 {error}
               </p>
             )}
@@ -162,7 +162,7 @@ export function DashboardShell({ email, sites: initialSites }: { email: string; 
   }
 
   return (
-    <div className="min-h-svh">
+    <div className="min-h-svh bg-muted">
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
@@ -216,7 +216,7 @@ export function DashboardShell({ email, sites: initialSites }: { email: string; 
           />
         ) : (
           <div className="mx-auto flex min-h-[70svh] max-w-md flex-col items-center justify-center px-6 text-center">
-            <span className="flex size-12 items-center justify-center rounded-2xl border border-border bg-card">
+            <span className="flex size-12 items-center justify-center rounded-3xl border border-border bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)]">
               <Globe2 className="size-5 text-brand" />
             </span>
             <h1 className="mt-5 text-2xl font-semibold tracking-tight">Add your first website</h1>

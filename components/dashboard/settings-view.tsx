@@ -31,7 +31,7 @@ interface PlanSummary {
 
 function Section({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card/60">
+    <section className="rounded-3xl border border-border bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)]">
       <header className="border-b border-border/70 px-5 py-4">
         <h2 className="font-medium">{title}</h2>
         <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
@@ -158,7 +158,7 @@ export function SettingsView({ email, sites: initialSites, plan }: { email: stri
   }
 
   return (
-    <div className="min-h-svh">
+    <div className="min-h-svh bg-muted">
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Logo href="/dashboard" />

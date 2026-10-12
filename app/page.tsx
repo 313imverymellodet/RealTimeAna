@@ -56,7 +56,7 @@ const FEATURES = [
     icon: Bot,
     title: "Honest numbers",
     body: "Known bots are filtered out, and Do Not Track and Global Privacy Control are respected. Time on page counts only while the tab is visible.",
-    span: "",
+    span: "md:col-span-2",
   },
 ]
 
@@ -98,24 +98,21 @@ export default function Home() {
       <main id="main">
         {/* Hero */}
         <section className="relative overflow-hidden">
-          <div className="bg-grid pointer-events-none absolute inset-0" aria-hidden />
-          <div className="glow-brand pointer-events-none absolute inset-0" aria-hidden />
-
-          <div className="relative mx-auto max-w-6xl px-4 pt-20 pb-10 text-center sm:px-6 sm:pt-28">
-            <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3.5 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
+          <div className="relative mx-auto max-w-6xl px-4 pt-20 pb-12 text-center sm:px-6 sm:pt-28">
+            <p className="mx-auto inline-flex items-center gap-2 rounded-full bg-muted px-3.5 py-1.5 text-xs font-medium text-muted-foreground">
               <LiveDot />
               Free while in beta
             </p>
-            <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
+            <h1 className="mx-auto mt-6 max-w-4xl text-5xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-7xl">
               See who&apos;s on your site <span className="text-brand">right now</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-xl text-base text-pretty text-muted-foreground sm:text-lg">
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-pretty text-muted-foreground sm:text-2xl sm:leading-snug">
               Live traffic, conversions and revenue by channel, with no cookies and nothing stored in your
               visitors&apos; browsers. One script tag, and it shows up in seconds.
             </p>
             <form
               action="/auth/register"
-              className="mx-auto mt-8 flex max-w-md flex-col gap-2 sm:flex-row"
+              className="mx-auto mt-10 flex max-w-md flex-col gap-2 sm:flex-row"
               aria-label="Add your website"
             >
               <label htmlFor="hero-domain" className="sr-only">
@@ -129,9 +126,9 @@ export default function Home() {
                 autoCapitalize="none"
                 spellCheck={false}
                 inputMode="url"
-                className="h-11 flex-1 bg-card/70 backdrop-blur"
+                className="h-12 flex-1 rounded-full bg-background px-5"
               />
-              <Button type="submit" size="lg" className="h-11 bg-brand px-6 text-brand-foreground hover:bg-brand/90">
+              <Button type="submit" size="lg" className="h-12 rounded-full bg-brand px-6 text-brand-foreground hover:bg-brand/90">
                 Add my website
                 <ArrowRight className="size-4" />
               </Button>
@@ -146,8 +143,8 @@ export default function Home() {
 
           {/* Product preview: the real dashboard component running on sample data */}
           <div className="relative mx-auto max-w-6xl px-4 pb-20 sm:px-6">
-            <div className="overflow-hidden rounded-3xl border border-border bg-background/80 shadow-2xl shadow-black/50">
-              <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
+            <div className="overflow-hidden rounded-[2rem] border border-border bg-muted shadow-[0_30px_80px_-20px_rgb(0_0_0/0.18)]">
+              <div className="flex items-center gap-2 border-b border-border bg-background px-4 py-3">
                 <span className="size-2.5 rounded-full bg-border" />
                 <span className="size-2.5 rounded-full bg-border" />
                 <span className="size-2.5 rounded-full bg-border" />
@@ -168,22 +165,22 @@ export default function Home() {
         </section>
 
         {/* Features */}
-        <section id="features" className="scroll-mt-20 border-t border-border/60 py-20 sm:py-24">
+        <section id="features" className="scroll-mt-20 bg-muted py-24 sm:py-32">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <h2 className="max-w-xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+            <h2 className="mx-auto max-w-3xl text-center text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
               Everything you check every day. Nothing you never open.
             </h2>
-            <div className="mt-10 grid gap-3 md:grid-cols-3">
+            <div className="mt-14 grid gap-4 md:grid-cols-3">
               {FEATURES.map((feature) => (
                 <article
                   key={feature.title}
-                  className={`rounded-2xl border border-border bg-card/60 p-6 transition-colors hover:border-brand/30 ${feature.span}`}
+                  className={`rounded-[1.75rem] bg-card p-8 ${feature.span}`}
                 >
-                  <span className="flex size-9 items-center justify-center rounded-lg bg-brand/12 text-brand">
+                  <span className="flex size-10 items-center justify-center rounded-full bg-brand/10 text-brand">
                     <feature.icon className="size-4.5" />
                   </span>
-                  <h3 className="mt-5 text-lg font-medium tracking-tight">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{feature.body}</p>
+                  <h3 className="mt-6 text-xl font-semibold tracking-tight">{feature.title}</h3>
+                  <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">{feature.body}</p>
                 </article>
               ))}
             </div>
@@ -191,32 +188,32 @@ export default function Home() {
         </section>
 
         {/* How it works */}
-        <section className="border-t border-border/60 py-20 sm:py-24">
+        <section className="border-t border-border/60 py-24 sm:py-32">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Live in three steps</h2>
-            <ol className="mt-10 grid gap-3 md:grid-cols-3">
+            <h2 className="text-center text-4xl font-semibold tracking-tight sm:text-6xl">Live in three steps</h2>
+            <ol className="mt-14 grid gap-4 md:grid-cols-3">
               {STEPS.map((step, index) => (
-                <li key={step.title} className="rounded-2xl border border-border bg-card/60 p-6">
+                <li key={step.title} className="rounded-[1.75rem] bg-muted p-8">
                   <span className="font-mono text-sm text-brand">0{index + 1}</span>
                   <h3 className="mt-3 text-lg font-medium tracking-tight">{step.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
                 </li>
               ))}
             </ol>
-            <CodeBlock code={SNIPPET} className="mt-3" />
+            <CodeBlock code={SNIPPET} className="mt-4" />
           </div>
         </section>
 
         {/* Pricing */}
-        <section id="pricing" className="scroll-mt-20 border-t border-border/60 py-20 sm:py-24">
+        <section id="pricing" className="scroll-mt-20 bg-muted py-24 sm:py-32">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 md:grid-cols-2 md:items-center">
             <div>
-              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Free while we&apos;re in beta</h2>
-              <p className="mt-4 max-w-md text-muted-foreground">
+              <h2 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">Free while we&apos;re in beta</h2>
+              <p className="mt-5 max-w-md text-lg text-muted-foreground">
                 Every feature is included. Paid plans for higher volumes will come later.
               </p>
             </div>
-            <div className="rounded-2xl border border-brand/30 bg-card/60 p-8">
+            <div className="rounded-[1.75rem] bg-card p-10 shadow-[0_20px_60px_-30px_rgb(0_0_0/0.2)]">
               <p className="text-sm font-medium text-brand">{BETA_PLAN.name}</p>
               <p className="mt-3 text-5xl font-semibold tracking-tight">
                 $0<span className="ml-1 text-base font-normal text-muted-foreground">/ month</span>
@@ -229,7 +226,7 @@ export default function Home() {
                 <li>Funnels and visitor journeys</li>
                 <li>Public dashboard links</li>
               </ul>
-              <Button asChild className="mt-8 w-full bg-brand text-brand-foreground hover:bg-brand/90">
+              <Button asChild className="mt-8 w-full rounded-full bg-brand text-brand-foreground hover:bg-brand/90">
                 <Link href="/auth/register">Start free</Link>
               </Button>
             </div>
@@ -237,9 +234,9 @@ export default function Home() {
         </section>
 
         {/* FAQ */}
-        <section className="border-t border-border/60 py-20 sm:py-24">
+        <section className="border-t border-border/60 py-24 sm:py-32">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Questions</h2>
+            <h2 className="text-center text-4xl font-semibold tracking-tight sm:text-6xl">Questions</h2>
             <Accordion type="single" collapsible className="mt-8">
               {FAQ.map((item) => (
                 <AccordionItem key={item.q} value={item.q}>
@@ -252,14 +249,13 @@ export default function Home() {
         </section>
 
         {/* Closing call to action */}
-        <section className="relative overflow-hidden border-t border-border/60 py-24 text-center">
-          <div className="glow-brand pointer-events-none absolute inset-0" aria-hidden />
+        <section className="relative overflow-hidden bg-muted py-28 text-center sm:py-36">
           <div className="relative mx-auto max-w-2xl px-4 sm:px-6">
-            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
+            <h2 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
               Find out which channel brings your customers.
             </h2>
-            <p className="mt-4 text-muted-foreground">Traffic, conversions and revenue in one live view.</p>
-            <Button asChild size="lg" className="mt-8 bg-brand px-6 text-brand-foreground hover:bg-brand/90">
+            <p className="mt-5 text-lg text-muted-foreground sm:text-xl">Traffic, conversions and revenue in one live view.</p>
+            <Button asChild size="lg" className="mt-8 rounded-full bg-brand px-6 text-brand-foreground hover:bg-brand/90">
               <Link href="/auth/register">
                 Start free
                 <ArrowRight className="size-4" />

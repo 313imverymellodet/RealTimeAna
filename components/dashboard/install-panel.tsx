@@ -9,7 +9,7 @@ export function InstallPanel({ siteId, domain }: { siteId: string; domain: strin
   const origin = useOrigin()
 
   return (
-    <section className="mx-auto max-w-2xl rounded-2xl border border-border bg-card/60 p-6 sm:p-8">
+    <section className="mx-auto max-w-2xl rounded-3xl border border-border bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)] p-6 sm:p-8">
       <p className="text-xs font-medium tracking-wide text-brand uppercase">One step left</p>
       <h2 className="mt-2 text-2xl font-semibold tracking-tight">Add the script to {domain}</h2>
       <p className="mt-2 text-sm text-muted-foreground">
