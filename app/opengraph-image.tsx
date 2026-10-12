@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og"
 
-export const alt = "Housecount: live web analytics without cookies"
+export const alt = "Housecount: know who's in the house"
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -24,10 +24,10 @@ export default function OpenGraphImage() {
           Housecount
         </div>
         <div style={{ marginTop: 40, fontSize: 84, fontWeight: 600, letterSpacing: -3, lineHeight: 1.05 }}>
-          See who&apos;s on your site right now
+          Know who&apos;s in the house.
         </div>
         <div style={{ marginTop: 28, fontSize: 34, color: "#6e6e73" }}>
-          Live web analytics. One script tag. No cookies.
+          Live audience analytics for publishers and creators.
         </div>
       </div>
     ),

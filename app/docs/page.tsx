@@ -5,7 +5,7 @@ import { SiteFooter, SiteNav } from "@/components/marketing/site-nav"
 
 export const metadata: Metadata = {
   title: "Docs",
-  description: "Install Housecount on any website and see exactly what it collects.",
+  description: "Install Housecount on your publication, count subscribers, and see exactly what it collects.",
 }
 
 const HTML = '<script defer data-site-id="YOUR-SITE-ID" src="https://YOUR-HOUSECOUNT-DOMAIN/tracker.js"></script>'
@@ -36,28 +36,28 @@ const ASTRO = `---
     src="https://YOUR-HOUSECOUNT-DOMAIN/tracker.js"></script>
 </head>`
 
-const GOAL_JS = `// A signup
-window.housecount?.("signup")
+const GOAL_JS = `// A newsletter signup
+window.housecount?.("newsletter signup")
 
-// A sale worth 49
-window.housecount?.("purchase", { revenue: 49 })`
+// A new member paying 8 a month
+window.housecount?.("membership", { revenue: 8 })`
 
-const GOAL_HTML = `<button data-housecount-goal="signup">Create account</button>
+const GOAL_HTML = `<button data-housecount-goal="newsletter signup">Subscribe</button>
 
-<a href="/thanks" data-housecount-goal="purchase" data-housecount-revenue="49">Buy now</a>`
+<a href="https://shop.example/item" data-housecount-goal="affiliate click">See the deal</a>`
 
-const IDENTIFY_JS = `// Run on every page while the user is signed in
-window.housecount?.identify("user_8142")`
+const IDENTIFY_JS = `// Run on every page while a member is signed in
+window.housecount?.identify("member_8142")`
 
 const SECTIONS = [
   { id: "install", label: "Install" },
   { id: "frameworks", label: "Framework guides" },
   { id: "verify", label: "Check it works" },
-  { id: "goals", label: "Goals and revenue" },
+  { id: "goals", label: "Subscribers and revenue" },
   { id: "funnels", label: "Funnels and journeys" },
-  { id: "identify", label: "Identify users" },
+  { id: "identify", label: "Follow members" },
   { id: "data", label: "What we collect" },
-  { id: "sharing", label: "Public dashboards" },
+  { id: "sharing", label: "Open house" },
 ]
 
 const COLLECTED = [
@@ -108,9 +108,11 @@ export default function DocsPage() {
           <header>
             <h1 className="text-4xl font-semibold tracking-tight">Docs</h1>
             <p className="mt-3 text-muted-foreground">
-              Housecount is one script tag. Your personal snippet, with your site ID filled in, is in the dashboard after you{" "}
+              Housecount shows who is reading your publication right now, what brought them and what makes them
+              subscribe. It is one script tag. Your personal snippet, with your site ID filled in, is in the dashboard
+              after you{" "}
               <Link href="/auth/register" className="text-foreground underline underline-offset-4">
-                add a website
+                add your site
               </Link>
               .
             </p>
@@ -134,9 +136,11 @@ export default function DocsPage() {
             <CodeBlock code={NEXT} />
             <h3 className="pt-2 font-medium">Astro</h3>
             <CodeBlock code={ASTRO} />
-            <h3 className="pt-2 font-medium">WordPress, Webflow, Framer, Shopify</h3>
+            <h3 className="pt-2 font-medium">WordPress, Ghost, Webflow, Framer</h3>
             <p className="text-muted-foreground">
-              Each has a setting for custom code in the site head. Paste the HTML snippet there and publish.
+              Each has a setting for custom code in the site head (in Ghost it is Code injection; in WordPress, your
+              theme or a header-scripts plugin). Paste the HTML snippet there and publish. If your platform does not
+              allow custom scripts in the head, Housecount cannot run on it.
             </p>
             <p className="text-sm text-muted-foreground">
               Single-page apps need nothing extra: client-side route changes are counted as page views.
@@ -157,10 +161,10 @@ export default function DocsPage() {
           </section>
 
           <section className="space-y-4">
-            <Heading id="goals">Goals and revenue</Heading>
+            <Heading id="goals">Subscribers and revenue</Heading>
             <p className="text-muted-foreground">
-              A goal is any action you care about: a signup, a demo request, a sale. Report one from your own code once
-              the Housecount script has loaded:
+              A goal is any action you care about: a newsletter signup, a new member, a click on an affiliate link.
+              Report one from your own code once the Housecount script has loaded:
             </p>
             <CodeBlock code={GOAL_JS} />
             <p className="text-muted-foreground">Or mark a button or link, with no JavaScript:</p>
@@ -182,10 +186,11 @@ export default function DocsPage() {
             <p className="text-muted-foreground">
               A funnel is an ordered list of two to six steps, each a page or a goal. Create one from the Funnels panel
               on your dashboard. A page step ending in <code className="font-mono text-foreground">*</code> matches
-              everything under it, so <code className="font-mono text-foreground">/blog/*</code> covers every post.
+              everything under it, so <code className="font-mono text-foreground">/news/*</code> covers every story. A
+              typical one for a publication: any story, then the membership page, then the membership goal.
             </p>
             <p className="text-muted-foreground">
-              The Visitor journeys panel lists recent anonymous visitors. Open one to see the pages they viewed and the
+              The Visitor journeys panel lists recent anonymous readers. Open one to see the stories they read and the
               goals they completed, in order, with where they came from.
             </p>
             <p className="text-sm text-muted-foreground">
@@ -196,15 +201,16 @@ export default function DocsPage() {
           </section>
 
           <section className="space-y-4">
-            <Heading id="identify">Identify signed-in users</Heading>
+            <Heading id="identify">Follow members across visits</Heading>
             <p className="text-muted-foreground">
-              If your site has accounts, tell Housecount who is signed in on each page load. Use your own stable user ID:
+              If readers sign in on your site, tell Housecount who is signed in on each page load. Use your own stable
+              member ID:
             </p>
             <CodeBlock code={IDENTIFY_JS} />
             <p className="text-muted-foreground">
               From then on, that person counts as one visitor in funnels and journeys across days and devices,
-              including the pages they viewed earlier the same day before signing in. Someone who signs up on Monday
-              and buys the following week now completes the funnel.
+              including the pages they viewed earlier the same day before signing in. Someone who joins the newsletter
+              on Monday and becomes a member the following week now completes the funnel.
             </p>
             <p className="text-sm text-muted-foreground">
               Housecount stores only a one-way hash of the ID, never the ID itself, and still writes nothing to the
@@ -236,10 +242,11 @@ export default function DocsPage() {
           </section>
 
           <section className="space-y-4">
-            <Heading id="sharing">Public dashboards</Heading>
+            <Heading id="sharing">Open house</Heading>
             <p className="text-muted-foreground">
               In Settings, turn on <span className="text-foreground">Public dashboard</span> for a website to get a
-              read-only link. Turn it off and the link stops working immediately.
+              read-only link to your numbers, useful for sponsors and advertisers. Visitor journeys are never included.
+              Turn it off and the link stops working immediately.
             </p>
           </section>
         </article>

@@ -88,27 +88,27 @@ export function getDemoStats(range: RangeKey): Stats {
     series,
     pages: share(visitors, [
       ["/", 0.46],
-      ["/pricing", 0.19],
-      ["/blog/launch-week", 0.12],
-      ["/docs", 0.09],
-      ["/changelog", 0.05],
-      ["/about", 0.03],
+      ["/membership", 0.19],
+      ["/news/city-budget-vote", 0.12],
+      ["/reviews/best-of-2026", 0.09],
+      ["/newsletter", 0.05],
+      ["/sports/friday-recap", 0.03],
     ]),
     entryPages: share(visitors, [
       ["/", 0.52],
-      ["/blog/launch-week", 0.21],
-      ["/pricing", 0.11],
-      ["/docs", 0.08],
-      ["/changelog", 0.04],
+      ["/news/city-budget-vote", 0.21],
+      ["/membership", 0.11],
+      ["/reviews/best-of-2026", 0.08],
+      ["/newsletter", 0.04],
     ]),
     referrers: share(
       visitors,
       [
         ["Direct / none", 0.34, 0.22],
         ["google.com", 0.27, 0.31],
-        ["news.ycombinator.com", 0.14, 0.08],
+        ["news.google.com", 0.14, 0.08],
         ["x.com", 0.11, 0.24],
-        ["github.com", 0.07, 0.11],
+        ["facebook.com", 0.07, 0.11],
         ["reddit.com", 0.04, 0.04],
       ],
       revenueCents,
@@ -116,9 +116,9 @@ export function getDemoStats(range: RangeKey): Stats {
     campaigns: share(
       visitors,
       [
-        ["launch-week", 0.13, 0.21],
-        ["newsletter", 0.06, 0.14],
-        ["producthunt", 0.04, 0.05],
+        ["sunday-newsletter", 0.13, 0.21],
+        ["sponsor-roundup", 0.06, 0.14],
+        ["breaking-alert", 0.04, 0.05],
       ],
       revenueCents,
     ),
@@ -141,9 +141,9 @@ export function getDemoStats(range: RangeKey): Stats {
       ["Bengaluru, IN", 0.03],
     ]),
     goals: [
-      { name: "signup", completions: signups, visitors: signups, revenueCents: 0 },
-      { name: "purchase", completions: purchases, visitors: purchases, revenueCents },
-      { name: "newsletter", completions: Math.round(visitors * 0.021), visitors: Math.round(visitors * 0.021), revenueCents: 0 },
+      { name: "newsletter signup", completions: signups, visitors: signups, revenueCents: 0 },
+      { name: "membership", completions: purchases, visitors: purchases, revenueCents },
+      { name: "affiliate click", completions: Math.round(visitors * 0.021), visitors: Math.round(visitors * 0.021), revenueCents: 0 },
     ],
     devices: share(visitors, [
       ["Desktop", 0.58],
@@ -194,9 +194,9 @@ export function getDemoRealtime(): Realtime {
     points,
     pages: [
       { label: "/", visitors: Math.ceil(visitors * 0.45) },
-      { label: "/pricing", visitors: Math.ceil(visitors * 0.25) },
-      { label: "/blog/launch-week", visitors: Math.ceil(visitors * 0.15) },
-      { label: "/docs", visitors: Math.ceil(visitors * 0.1) },
+      { label: "/membership", visitors: Math.ceil(visitors * 0.25) },
+      { label: "/news/city-budget-vote", visitors: Math.ceil(visitors * 0.15) },
+      { label: "/reviews/best-of-2026", visitors: Math.ceil(visitors * 0.1) },
     ],
   }
 }
@@ -207,12 +207,12 @@ export function getDemoFunnels(range: RangeKey): FunnelResult[] {
   return [
     {
       id: "demo-signup-to-sale",
-      name: "Homepage to purchase",
+      name: "Story to member",
       steps: [
-        { type: "page", value: "/", visitors: counts[0] },
-        { type: "page", value: "/pricing", visitors: counts[1] },
-        { type: "goal", value: "signup", visitors: counts[2] },
-        { type: "goal", value: "purchase", visitors: counts[3] },
+        { type: "page", value: "/news/*", visitors: counts[0] },
+        { type: "page", value: "/membership", visitors: counts[1] },
+        { type: "goal", value: "newsletter signup", visitors: counts[2] },
+        { type: "goal", value: "membership", visitors: counts[3] },
       ],
     },
   ]
@@ -236,13 +236,13 @@ const DEMO_VISITORS: {
     place: ["US", "Detroit"],
     agent: ["Desktop", "Chrome", "macOS"],
     referrer: "x.com",
-    campaign: "launch-week",
+    campaign: "sunday-newsletter",
     steps: [
       [0, "page", "/", 48, null],
-      [1, "page", "/pricing", 95, null],
-      [3, "goal", "signup", null, null],
-      [3, "page", "/docs", 140, null],
-      [6, "goal", "purchase", null, 7900],
+      [1, "page", "/membership", 95, null],
+      [3, "goal", "newsletter signup", null, null],
+      [3, "page", "/reviews/best-of-2026", 140, null],
+      [6, "goal", "membership", null, 7900],
     ],
   },
   {
@@ -253,9 +253,9 @@ const DEMO_VISITORS: {
     referrer: "google.com",
     campaign: null,
     steps: [
-      [0, "page", "/blog/launch-week", 210, null],
+      [0, "page", "/news/city-budget-vote", 210, null],
       [4, "page", "/", 30, null],
-      [5, "goal", "newsletter", null, null],
+      [5, "goal", "affiliate click", null, null],
     ],
   },
   {
@@ -263,12 +263,12 @@ const DEMO_VISITORS: {
     minutesAgo: 14,
     place: ["GB", "London"],
     agent: ["Desktop", "Firefox", "Windows"],
-    referrer: "news.ycombinator.com",
+    referrer: "news.google.com",
     campaign: null,
     steps: [
       [0, "page", "/", 22, null],
-      [1, "page", "/pricing", 64, null],
-      [2, "page", "/docs", 180, null],
+      [1, "page", "/membership", 64, null],
+      [2, "page", "/reviews/best-of-2026", 180, null],
     ],
   },
   {
@@ -285,13 +285,13 @@ const DEMO_VISITORS: {
     minutesAgo: 41,
     place: ["CA", "Toronto"],
     agent: ["Desktop", "Safari", "macOS"],
-    referrer: "github.com",
+    referrer: "facebook.com",
     campaign: "newsletter",
     steps: [
-      [0, "page", "/changelog", 75, null],
-      [1, "page", "/pricing", 110, null],
-      [3, "goal", "signup", null, null],
-      [4, "goal", "purchase", null, 2900],
+      [0, "page", "/newsletter", 75, null],
+      [1, "page", "/membership", 110, null],
+      [3, "goal", "newsletter signup", null, null],
+      [4, "goal", "membership", null, 2900],
     ],
   },
   {
@@ -302,7 +302,7 @@ const DEMO_VISITORS: {
     referrer: "reddit.com",
     campaign: null,
     steps: [
-      [0, "page", "/docs", 95, null],
+      [0, "page", "/reviews/best-of-2026", 95, null],
       [2, "page", "/", 40, null],
     ],
   },
@@ -320,7 +320,7 @@ export function getDemoVisitors(): VisitorSummary[] {
     return {
       id: visitor.id,
       // The two buyers in the sample are shown as signed-in users
-      identified: goals.some((step) => step[2] === "purchase"),
+      identified: goals.some((step) => step[2] === "membership"),
       firstSeen: demoStepTime(visitor.minutesAgo, 0, last),
       lastSeen: demoStepTime(visitor.minutesAgo, last, last),
       pageviews: pages.length,

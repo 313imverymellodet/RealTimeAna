@@ -9,83 +9,88 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { BETA_PLAN } from "@/lib/plans"
 
+// Order follows the three messages: live, what worked, respectful
 const FEATURES = [
   {
     icon: Globe2,
-    title: "Live, not yesterday",
-    body: "See how many people are on your site this minute, which pages they are reading and where in the world they are.",
+    title: "Watch a story land",
+    body: "See how many readers are in the house this minute, which stories they are on and where in the world they are reading from.",
     span: "md:col-span-2",
   },
   {
-    icon: Cookie,
-    title: "No cookies. No storage.",
-    body: "Housecount never writes to the visitor's browser. Unique visitors are counted with an anonymous hash that changes every day.",
-    span: "",
-  },
-  {
     icon: Target,
-    title: "Goals and revenue",
-    body: "Mark signups and sales with one line. See conversion rate and revenue next to your traffic, on the same chart.",
+    title: "Count what matters",
+    body: "Mark newsletter signups, memberships and affiliate clicks with one line. Conversion rate and revenue sit next to your traffic.",
     span: "",
   },
   {
     icon: Link2,
-    title: "Know which channel pays",
-    body: "Every conversion is tied back to the referrer or campaign that started the visit, so you can see which post, launch or link actually earned money.",
-    span: "md:col-span-2",
-  },
-  {
-    icon: Feather,
-    title: "1.7 KB script",
-    body: "One deferred script tag, about 1.7 KB gzipped. It works with single-page apps out of the box.",
+    title: "Know what brought them",
+    body: "Every signup is tied back to the link, post or newsletter that started the visit, so you can see which one actually earned subscribers.",
     span: "",
   },
   {
     icon: Route,
-    title: "Funnels and journeys",
-    body: "Define the steps to a sale and see where people drop off. Open any anonymous visitor to follow the pages and goals of their visit.",
+    title: "From story to subscriber",
+    body: "Lay out the path from an article to a signup and see where readers drop off. Open any anonymous reader to follow their visit page by page.",
     span: "md:col-span-2",
   },
   {
     icon: Share2,
-    title: "Public dashboards",
-    body: "Flip one switch to get a read-only link you can share with clients, investors or your audience.",
+    title: "Open house",
+    body: "Flip one switch for a read-only link to your numbers. Share it with sponsors, advertisers or your audience.",
+    span: "",
+  },
+  {
+    icon: Cookie,
+    title: "No cookies. Nothing stored.",
+    body: "Housecount never writes to your readers' browsers. Unique readers are counted with an anonymous hash that changes every day.",
     span: "",
   },
   {
     icon: Bot,
     title: "Honest numbers",
-    body: "Known bots are filtered out, and Do Not Track and Global Privacy Control are respected. Time on page counts only while the tab is visible.",
-    span: "md:col-span-2",
+    body: "Known bots are filtered out, and Do Not Track is respected. Time on a story counts only while the tab is visible.",
+    span: "",
+  },
+  {
+    icon: Feather,
+    title: "One line to install",
+    body: "A single deferred script tag, about 1.7 KB gzipped. It works on WordPress, Ghost, Webflow, Next.js and anything else that serves HTML.",
+    span: "md:col-span-3",
   },
 ]
 
 const STEPS = [
-  { title: "Add your domain", body: "Create an account and enter the site you want to track." },
+  { title: "Add your site", body: "Create an account and enter the publication you want to watch." },
   { title: "Paste one line", body: "Drop the script tag into your site's head. No build step, no config." },
-  { title: "Watch it live", body: "Your dashboard switches on by itself when the first visit arrives." },
+  { title: "Watch the house fill", body: "Your dashboard switches on by itself when the first reader arrives." },
 ]
 
 const FAQ = [
   {
-    q: "Do I need a cookie banner for Housecount?",
-    a: "Housecount sets no cookies and stores nothing in the visitor's browser, and it does not track people across sites or days. Whether your site needs a banner still depends on the other tools you run and the law where you operate, so check with someone qualified.",
+    q: "Who is Housecount for?",
+    a: "Independent publishers and creators: blogs, newsletters, niche news sites and small media brands. It works on any website, and goals and revenue work the same way for a store or an app.",
   },
   {
-    q: "How are unique visitors counted without cookies?",
-    a: "Each page view is tagged with a one-way hash of the site, the visitor's IP address and browser, mixed with a random salt that is replaced and deleted every day. The IP address itself is never stored, and the same person gets a different hash tomorrow.",
+    q: "Do I need a cookie banner for Housecount?",
+    a: "Housecount sets no cookies and stores nothing in your readers' browsers, and it does not track people across sites or days. Whether your site needs a banner still depends on the other tools you run and the law where you operate, so check with someone qualified.",
+  },
+  {
+    q: "How are unique readers counted without cookies?",
+    a: "Each page view is tagged with a one-way hash of the site, the reader's IP address and browser, mixed with a random salt that is replaced and deleted every day. The IP address itself is never stored, and the same person gets a different hash tomorrow.",
+  },
+  {
+    q: "Can I follow members across visits?",
+    a: "Yes. If readers sign in on your site, pass their member ID and Housecount follows that person across days and devices. Only a one-way hash of the ID is stored.",
   },
   {
     q: "What does it cost?",
-    a: `Housecount is free while it is in beta, up to ${BETA_PLAN.pageviewLimit.toLocaleString("en")} pageviews a month across ${BETA_PLAN.siteLimit} websites. Paid plans for higher volumes will come later.`,
+    a: `Housecount is free while it is in beta, up to ${BETA_PLAN.pageviewLimit.toLocaleString("en")} pageviews a month across ${BETA_PLAN.siteLimit} sites. Paid plans for higher volumes will come later.`,
   },
   {
     q: "Will it slow my site down?",
     a: "The script is about 1.7 KB gzipped, loads with defer, and sends one small request per page view.",
-  },
-  {
-    q: "Does it work with Next.js, React or other single-page apps?",
-    a: "Yes. Client-side navigation is detected automatically and counted as a new page view.",
   },
 ]
 
@@ -104,16 +109,16 @@ export default function Home() {
               Free while in beta
             </p>
             <h1 className="mx-auto mt-6 max-w-4xl text-5xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-7xl">
-              See who&apos;s on your site <span className="text-brand">right now</span>
+              Know who&apos;s <span className="text-brand">in the house.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-pretty text-muted-foreground sm:text-2xl sm:leading-snug">
-              Live traffic, conversions and revenue by channel, with no cookies and nothing stored in your
-              visitors&apos; browsers. One script tag, and it shows up in seconds.
+              Live analytics for independent publishers and creators. See who is reading right now, what brought
+              them, and what makes them subscribe.
             </p>
             <form
               action="/auth/register"
               className="mx-auto mt-10 flex max-w-md flex-col gap-2 sm:flex-row"
-              aria-label="Add your website"
+              aria-label="Add your site"
             >
               <label htmlFor="hero-domain" className="sr-only">
                 Your website
@@ -121,7 +126,7 @@ export default function Home() {
               <Input
                 id="hero-domain"
                 name="domain"
-                placeholder="yourwebsite.com"
+                placeholder="yoursite.com"
                 autoComplete="off"
                 autoCapitalize="none"
                 spellCheck={false}
@@ -129,12 +134,12 @@ export default function Home() {
                 className="h-12 flex-1 rounded-full bg-background px-5"
               />
               <Button type="submit" size="lg" className="h-12 rounded-full bg-brand px-6 text-brand-foreground hover:bg-brand/90">
-                Add my website
+                Add my site
                 <ArrowRight className="size-4" />
               </Button>
             </form>
             <p className="mt-4 text-xs text-muted-foreground">
-              No credit card. Set up in about a minute.{" "}
+              Free to start. One script tag. No cookies.{" "}
               <Link href="/demo" className="text-foreground underline underline-offset-4">
                 See the live demo
               </Link>
@@ -153,7 +158,7 @@ export default function Home() {
                 </span>
               </div>
               <DashboardView
-                title="acme.dev"
+                title="The Northside Post"
                 subtitle="This is the actual dashboard, shown with sample data"
                 statsUrl="/api/demo/stats"
                 realtimeUrl="/api/demo/realtime"
@@ -168,7 +173,7 @@ export default function Home() {
         <section id="features" className="scroll-mt-20 bg-muted py-24 sm:py-32">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <h2 className="mx-auto max-w-3xl text-center text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
-              Everything you check every day. Nothing you never open.
+              Everything you check after you hit publish.
             </h2>
             <div className="mt-14 grid gap-4 md:grid-cols-3">
               {FEATURES.map((feature) => (
@@ -210,7 +215,7 @@ export default function Home() {
             <div>
               <h2 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">Free while we&apos;re in beta</h2>
               <p className="mt-5 max-w-md text-lg text-muted-foreground">
-                Every feature is included. Paid plans for higher volumes will come later.
+                Every feature is included. Paid plans for bigger audiences will come later.
               </p>
             </div>
             <div className="rounded-[1.75rem] bg-card p-10 shadow-[0_20px_60px_-30px_rgb(0_0_0/0.2)]">
@@ -220,11 +225,11 @@ export default function Home() {
               </p>
               <ul className="mt-6 space-y-2.5 text-sm">
                 <li>{BETA_PLAN.pageviewLimit.toLocaleString("en")} pageviews per month</li>
-                <li>{BETA_PLAN.siteLimit} websites</li>
-                <li>Live visitors, sources, pages, countries and devices</li>
-                <li>Goals, conversion rate and revenue by channel</li>
-                <li>Funnels and visitor journeys</li>
-                <li>Public dashboard links</li>
+                <li>{BETA_PLAN.siteLimit} sites</li>
+                <li>Live readers, sources, stories, countries and devices</li>
+                <li>Signups, conversion rate and revenue by source</li>
+                <li>Funnels and reader journeys</li>
+                <li>Open-house links for sponsors</li>
               </ul>
               <Button asChild className="mt-8 w-full rounded-full bg-brand text-brand-foreground hover:bg-brand/90">
                 <Link href="/auth/register">Start free</Link>
@@ -252,9 +257,9 @@ export default function Home() {
         <section className="relative overflow-hidden bg-muted py-28 text-center sm:py-36">
           <div className="relative mx-auto max-w-2xl px-4 sm:px-6">
             <h2 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
-              Find out which channel brings your customers.
+              Your next reader is about to walk in.
             </h2>
-            <p className="mt-5 text-lg text-muted-foreground sm:text-xl">Traffic, conversions and revenue in one live view.</p>
+            <p className="mt-5 text-lg text-muted-foreground sm:text-xl">Be there when they do.</p>
             <Button asChild size="lg" className="mt-8 rounded-full bg-brand px-6 text-brand-foreground hover:bg-brand/90">
               <Link href="/auth/register">
                 Start free

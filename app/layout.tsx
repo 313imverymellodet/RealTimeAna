@@ -11,16 +11,16 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Housecount: live web analytics without cookies",
+    default: "Housecount: live audience analytics for publishers and creators",
     template: "%s · Housecount",
   },
   description:
-    "See who is on your site right now. Live web analytics with one script tag, no cookies and nothing stored in your visitors' browsers.",
+    "Know who's in the house. See who is reading right now, what brought them and what makes them subscribe. One script tag, no cookies.",
   openGraph: {
     type: "website",
     siteName: "Housecount",
-    title: "Housecount: live web analytics without cookies",
-    description: "See who is on your site right now. One script tag, no cookies.",
+    title: "Housecount: live audience analytics for publishers and creators",
+    description: "See who is reading right now, what brought them and what makes them subscribe.",
   },
   twitter: { card: "summary_large_image" },
 }

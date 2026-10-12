@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = {
   title: "Live demo",
-  description: "Try the Housecount dashboard without signing up.",
+  description: "Try the Housecount dashboard on a sample publication, without signing up.",
 }
 
 export const dynamic = "force-dynamic"
@@ -29,7 +29,7 @@ export default function DemoPage() {
             </Button>
           </p>
         </div>
-        <DashboardView title="acme.dev" subtitle="Sample data" statsUrl="/api/demo/stats"
+        <DashboardView title="The Northside Post" subtitle="Sample data" statsUrl="/api/demo/stats"
           realtimeUrl="/api/demo/realtime"
           funnelsUrl="/api/demo/funnels"
           visitorsUrl="/api/demo/visitors"
