@@ -140,7 +140,7 @@ export function AuthForm({ mode, providers, domain }: AuthFormProps) {
         </div>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          {isRegister ? "Already have an account? " : "New to Pulse? "}
+          {isRegister ? "Already have an account? " : "New to Housecount? "}
           <Link
             href={isRegister ? "/auth/login" : "/auth/register"}
             className="text-foreground underline-offset-4 hover:underline"

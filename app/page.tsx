@@ -19,7 +19,7 @@ const FEATURES = [
   {
     icon: Cookie,
     title: "No cookies. No storage.",
-    body: "Pulse never writes to the visitor's browser. Unique visitors are counted with an anonymous hash that changes every day.",
+    body: "Housecount never writes to the visitor's browser. Unique visitors are counted with an anonymous hash that changes every day.",
     span: "",
   },
   {
@@ -36,8 +36,8 @@ const FEATURES = [
   },
   {
     icon: Feather,
-    title: "1.6 KB script",
-    body: "One deferred script tag, about 1.6 KB gzipped. It works with single-page apps out of the box.",
+    title: "1.7 KB script",
+    body: "One deferred script tag, about 1.7 KB gzipped. It works with single-page apps out of the box.",
     span: "",
   },
   {
@@ -68,8 +68,8 @@ const STEPS = [
 
 const FAQ = [
   {
-    q: "Do I need a cookie banner for Pulse?",
-    a: "Pulse sets no cookies and stores nothing in the visitor's browser, and it does not track people across sites or days. Whether your site needs a banner still depends on the other tools you run and the law where you operate, so check with someone qualified.",
+    q: "Do I need a cookie banner for Housecount?",
+    a: "Housecount sets no cookies and stores nothing in the visitor's browser, and it does not track people across sites or days. Whether your site needs a banner still depends on the other tools you run and the law where you operate, so check with someone qualified.",
   },
   {
     q: "How are unique visitors counted without cookies?",
@@ -77,11 +77,11 @@ const FAQ = [
   },
   {
     q: "What does it cost?",
-    a: `Pulse is free while it is in beta, up to ${BETA_PLAN.pageviewLimit.toLocaleString("en")} pageviews a month across ${BETA_PLAN.siteLimit} websites. Paid plans for higher volumes will come later.`,
+    a: `Housecount is free while it is in beta, up to ${BETA_PLAN.pageviewLimit.toLocaleString("en")} pageviews a month across ${BETA_PLAN.siteLimit} websites. Paid plans for higher volumes will come later.`,
   },
   {
     q: "Will it slow my site down?",
-    a: "The script is about 1.6 KB gzipped, loads with defer, and sends one small request per page view.",
+    a: "The script is about 1.7 KB gzipped, loads with defer, and sends one small request per page view.",
   },
   {
     q: "Does it work with Next.js, React or other single-page apps?",
@@ -89,7 +89,7 @@ const FAQ = [
   },
 ]
 
-const SNIPPET = '<script defer data-site-id="YOUR-SITE-ID" src="https://YOUR-PULSE-DOMAIN/tracker.js"></script>'
+const SNIPPET = '<script defer data-site-id="YOUR-SITE-ID" src="https://YOUR-HOUSECOUNT-DOMAIN/tracker.js"></script>'
 
 export default function Home() {
   return (

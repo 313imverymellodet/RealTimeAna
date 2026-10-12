@@ -4,7 +4,7 @@
   var endpoint = (script && script.getAttribute("data-api")) || (script && new URL("/api/track", script.src).href)
 
   if (!siteId || !endpoint) {
-    console.error("Pulse: missing data-site-id on the tracking script")
+    console.error("Housecount: missing data-site-id on the tracking script")
     return
   }
 
@@ -66,11 +66,11 @@
     pageview()
   }
 
-  // Goals: pulse("signup") or pulse("purchase", { revenue: 49 })
+  // Goals: housecount("signup") or housecount("purchase", { revenue: 49 })
   function goal(name, props) {
     send({ type: "event", name: String(name), path: location.pathname, revenue: props && props.revenue })
   }
-  // Signed-in users: pulse.identify("user_123") on each page load while logged in.
+  // Signed-in users: housecount.identify("user_123") on each page load while logged in.
   // Lets funnels and journeys follow one person across days. Nothing is stored in the browser.
   var identified
   goal.identify = function (userId) {
@@ -78,14 +78,18 @@
     identified = String(userId)
     send({ type: "identify", userId: identified, path: location.pathname })
   }
-  window.pulse = goal
+  // `pulse` is the former name, kept so existing installs keep working
+  window.housecount = window.pulse = goal
 
-  // Or with no code: <button data-pulse-goal="signup" data-pulse-revenue="49">
+  // Or with no code: <button data-housecount-goal="signup" data-housecount-revenue="49">
   document.addEventListener(
     "click",
     (event) => {
-      var el = event.target && event.target.closest && event.target.closest("[data-pulse-goal]")
-      if (el) goal(el.getAttribute("data-pulse-goal"), { revenue: Number(el.getAttribute("data-pulse-revenue")) || 0 })
+      var el =
+        event.target && event.target.closest && event.target.closest("[data-housecount-goal],[data-pulse-goal]")
+      if (!el) return
+      var attr = (name) => el.getAttribute("data-housecount-" + name) || el.getAttribute("data-pulse-" + name)
+      goal(attr("goal"), { revenue: Number(attr("revenue")) || 0 })
     },
     true,
   )

@@ -48,7 +48,10 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-muted">
       <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 py-10 sm:flex-row sm:items-center sm:px-6">
-        <Logo />
+        <div>
+          <Logo />
+          <p className="mt-2 text-sm text-muted-foreground">Know who&apos;s in the house.</p>
+        </div>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
           {LINKS.map((link) => (
             <Link key={link.href} href={link.href} className="hover:text-foreground">

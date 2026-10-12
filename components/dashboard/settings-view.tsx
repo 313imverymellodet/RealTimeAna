@@ -175,7 +175,7 @@ export function SettingsView({ email, sites: initialSites, plan }: { email: stri
           <h1 className="mt-3 text-2xl font-semibold tracking-tight">Settings</h1>
         </div>
 
-        <Section title="Plan and usage" description={`${plan.name}. Free while Pulse is in beta; no card needed.`}>
+        <Section title="Plan and usage" description={`${plan.name}. Free while Housecount is in beta; no card needed.`}>
           <div className="flex items-baseline justify-between text-sm">
             <span>Pageviews this month</span>
             <span className="tabular font-mono text-muted-foreground">

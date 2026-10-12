@@ -5,10 +5,10 @@ import { SiteFooter, SiteNav } from "@/components/marketing/site-nav"
 
 export const metadata: Metadata = {
   title: "Docs",
-  description: "Install Pulse on any website and see exactly what it collects.",
+  description: "Install Housecount on any website and see exactly what it collects.",
 }
 
-const HTML = '<script defer data-site-id="YOUR-SITE-ID" src="https://YOUR-PULSE-DOMAIN/tracker.js"></script>'
+const HTML = '<script defer data-site-id="YOUR-SITE-ID" src="https://YOUR-HOUSECOUNT-DOMAIN/tracker.js"></script>'
 
 const NEXT = `// app/layout.tsx
 import Script from "next/script"
@@ -19,7 +19,7 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <Script
-          src="https://YOUR-PULSE-DOMAIN/tracker.js"
+          src="https://YOUR-HOUSECOUNT-DOMAIN/tracker.js"
           data-site-id="YOUR-SITE-ID"
           strategy="afterInteractive"
         />
@@ -33,21 +33,21 @@ const ASTRO = `---
 ---
 <head>
   <script is:inline defer data-site-id="YOUR-SITE-ID"
-    src="https://YOUR-PULSE-DOMAIN/tracker.js"></script>
+    src="https://YOUR-HOUSECOUNT-DOMAIN/tracker.js"></script>
 </head>`
 
 const GOAL_JS = `// A signup
-window.pulse?.("signup")
+window.housecount?.("signup")
 
 // A sale worth 49
-window.pulse?.("purchase", { revenue: 49 })`
+window.housecount?.("purchase", { revenue: 49 })`
 
-const GOAL_HTML = `<button data-pulse-goal="signup">Create account</button>
+const GOAL_HTML = `<button data-housecount-goal="signup">Create account</button>
 
-<a href="/thanks" data-pulse-goal="purchase" data-pulse-revenue="49">Buy now</a>`
+<a href="/thanks" data-housecount-goal="purchase" data-housecount-revenue="49">Buy now</a>`
 
 const IDENTIFY_JS = `// Run on every page while the user is signed in
-window.pulse?.identify("user_8142")`
+window.housecount?.identify("user_8142")`
 
 const SECTIONS = [
   { id: "install", label: "Install" },
@@ -108,7 +108,7 @@ export default function DocsPage() {
           <header>
             <h1 className="text-4xl font-semibold tracking-tight">Docs</h1>
             <p className="mt-3 text-muted-foreground">
-              Pulse is one script tag. Your personal snippet, with your site ID filled in, is in the dashboard after you{" "}
+              Housecount is one script tag. Your personal snippet, with your site ID filled in, is in the dashboard after you{" "}
               <Link href="/auth/register" className="text-foreground underline underline-offset-4">
                 add a website
               </Link>
@@ -148,7 +148,7 @@ export default function DocsPage() {
             <ol className="list-decimal space-y-2 pl-5 text-muted-foreground">
               <li>Publish your site with the snippet in place.</li>
               <li>Open your live site in a new tab.</li>
-              <li>Your Pulse dashboard switches from the install screen to live charts within a few seconds.</li>
+              <li>Your Housecount dashboard switches from the install screen to live charts within a few seconds.</li>
             </ol>
             <p className="text-sm text-muted-foreground">
               Nothing showing? Visits from localhost are ignored, ad blockers may block the script, and browsers with Do
@@ -160,7 +160,7 @@ export default function DocsPage() {
             <Heading id="goals">Goals and revenue</Heading>
             <p className="text-muted-foreground">
               A goal is any action you care about: a signup, a demo request, a sale. Report one from your own code once
-              the Pulse script has loaded:
+              the Housecount script has loaded:
             </p>
             <CodeBlock code={GOAL_JS} />
             <p className="text-muted-foreground">Or mark a button or link, with no JavaScript:</p>
@@ -198,7 +198,7 @@ export default function DocsPage() {
           <section className="space-y-4">
             <Heading id="identify">Identify signed-in users</Heading>
             <p className="text-muted-foreground">
-              If your site has accounts, tell Pulse who is signed in on each page load. Use your own stable user ID:
+              If your site has accounts, tell Housecount who is signed in on each page load. Use your own stable user ID:
             </p>
             <CodeBlock code={IDENTIFY_JS} />
             <p className="text-muted-foreground">
@@ -207,7 +207,7 @@ export default function DocsPage() {
               and buys the following week now completes the funnel.
             </p>
             <p className="text-sm text-muted-foreground">
-              Pulse stores only a one-way hash of the ID, never the ID itself, and still writes nothing to the
+              Housecount stores only a one-way hash of the ID, never the ID itself, and still writes nothing to the
               visitor&apos;s browser. Prefer an internal ID over an email address. Visitor totals on the main
               dashboard are unchanged and still count daily uniques.
             </p>

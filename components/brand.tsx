@@ -1,15 +1,24 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
+// Seats filling up: three taken, one still open
+export function LogoMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 28 28" className={cn("size-7", className)} aria-hidden>
+      <rect width="28" height="28" rx="8" fill="var(--foreground)" />
+      <circle cx="9" cy="10" r="2.6" fill="var(--background)" />
+      <circle cx="19" cy="10" r="2.6" fill="var(--background)" />
+      <circle cx="9" cy="19" r="2.6" fill="var(--background)" />
+      <circle cx="19" cy="19" r="2.1" fill="none" stroke="var(--background)" strokeWidth="1.2" opacity="0.6" />
+    </svg>
+  )
+}
+
 export function Logo({ className, href = "/" }: { className?: string; href?: string }) {
   return (
     <Link href={href} className={cn("flex items-center gap-2 font-semibold tracking-tight", className)}>
-      <span className="relative flex size-7 items-center justify-center rounded-lg bg-foreground text-background">
-        <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden>
-          <path d="M2 12h4l3-7 5 14 3-7h5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </span>
-      Pulse
+      <LogoMark />
+      housecount
     </Link>
   )
 }

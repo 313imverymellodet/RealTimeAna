@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = {
   title: "Live demo",
-  description: "Try the Pulse dashboard without signing up.",
+  description: "Try the Housecount dashboard without signing up.",
 }
 
 export const dynamic = "force-dynamic"

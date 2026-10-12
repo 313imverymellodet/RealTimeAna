@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og"
 
-export const alt = "Pulse: live web analytics without cookies"
+export const alt = "Housecount: live web analytics without cookies"
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -21,7 +21,7 @@ export default function OpenGraphImage() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 36, fontWeight: 600 }}>
           <div style={{ width: 20, height: 20, borderRadius: 20, background: "#0071e3" }} />
-          Pulse
+          Housecount
         </div>
         <div style={{ marginTop: 40, fontSize: 84, fontWeight: 600, letterSpacing: -3, lineHeight: 1.05 }}>
           See who&apos;s on your site right now

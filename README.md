@@ -1,6 +1,6 @@
-# Pulse
+# Housecount
 
-Live web analytics without cookies: a 1.6 KB tracking script, an ingestion endpoint and a dashboard.
+Know who's in the house. Live web analytics without cookies: a 1.7 KB tracking script, an ingestion endpoint and a dashboard.
 
 Next.js 16 (App Router) · Postgres with Drizzle · Better Auth · deployed on Railway.
 
@@ -52,12 +52,14 @@ Sites embed `public/tracker.js` with their site id. It posts pageview and durati
 - **Rate limiting** in `lib/rate-limit.ts` is in memory and per instance: good enough for one Railway
   instance, replace with a shared store before scaling out.
 
-**Goals and revenue.** Sites call `pulse("signup")` or `pulse("purchase", { revenue: 49 })`, or add
-`data-pulse-goal="signup"` to an element. Each event copies the referrer and campaign of the visitor's
+The tracker also answers to the former name (`pulse(...)`, `data-pulse-goal`) so earlier installs keep working.
+
+**Goals and revenue.** Sites call `housecount("signup")` or `housecount("purchase", { revenue: 49 })`, or add
+`data-housecount-goal="signup"` to an element. Each event copies the referrer and campaign of the visitor's
 session, which is how revenue is attributed to a channel. Revenue is whatever the site's own code reports;
 it is not verified against a payment provider.
 
-**Signed-in users.** `pulse.identify("user_123")` links the day's visitor hash to a hash of the site's own
+**Signed-in users.** `housecount.identify("user_123")` links the day's visitor hash to a hash of the site's own
 user id (`identities` table). Funnels and journeys group by that id when present, so they follow a person
 across days and devices. Dashboard visitor totals still count daily uniques.
 
