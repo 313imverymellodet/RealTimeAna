@@ -111,8 +111,8 @@ export default function DocsPage() {
           <header>
             <h1 className="text-4xl font-semibold tracking-tight">Docs</h1>
             <p className="mt-3 text-muted-foreground">
-              Housecount shows who is reading your publication right now, what brought them and what makes them
-              subscribe. It is one script tag. Your personal snippet, with your site ID filled in, is in the dashboard
+              Housecount shows how many people are reading your publication right now, what brought them, and which
+              stories and sources lead to subscribers. It is one script tag. Your personal snippet, with your site ID filled in, is in the dashboard
               after you{" "}
               <Link href="/auth/register" className="text-foreground underline underline-offset-4">
                 add your site

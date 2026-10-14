@@ -15,12 +15,12 @@ export const metadata: Metadata = {
     template: "%s · Housecount",
   },
   description:
-    "Know who's in the house. See who is reading right now, what brought them and what makes them subscribe. One script tag, no cookies.",
+    "Know who's in the house. See how many people are reading right now, what brought them, and which stories and sources lead to subscribers. One script tag, no cookies.",
   openGraph: {
     type: "website",
     siteName: "Housecount",
     title: "Housecount: live audience analytics for publishers and creators",
-    description: "See who is reading right now, what brought them and what makes them subscribe.",
+    description: "See how many people are reading right now, what brought them, and which stories and sources lead to subscribers.",
   },
   twitter: { card: "summary_large_image" },
 }

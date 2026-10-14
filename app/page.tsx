@@ -112,8 +112,8 @@ export default function Home() {
               Know who&apos;s <span className="text-brand-ink">in the house.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-pretty text-muted-foreground sm:text-2xl sm:leading-snug">
-              Live analytics for independent publishers and creators. See who is reading right now, what brought
-              them, and what makes them subscribe.
+              Live analytics for independent publishers and creators. See how many people are reading right now,
+              what brought them, and which stories and sources lead to subscribers.
             </p>
             <form
               action="/auth/register"
