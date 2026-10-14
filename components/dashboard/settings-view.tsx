@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { authClient } from "@/lib/auth-client"
 
 interface PlanSummary {
   name: string
@@ -151,10 +152,52 @@ function SiteRow({ site, onChange, onDelete }: { site: SiteSummary; onChange: (s
   )
 }
 
-export function SettingsView({ email, sites: initialSites, plan }: { email: string; sites: SiteSummary[]; plan: PlanSummary }) {
+interface EmailSettings {
+  configured: boolean
+  verified: boolean
+  weeklySummary: boolean
+}
+
+export function SettingsView({
+  userEmail: email,
+  sites: initialSites,
+  plan,
+  email: emailSettings,
+}: {
+  userEmail: string
+  sites: SiteSummary[]
+  plan: PlanSummary
+  email: EmailSettings
+}) {
   const router = useRouter()
   const [sites, setSites] = useState(initialSites)
   const [deleting, setDeleting] = useState(false)
+  const [weeklySummary, setWeeklySummary] = useState(emailSettings.weeklySummary)
+  const [verificationSent, setVerificationSent] = useState(false)
+
+  const toggleSummary = async (next: boolean) => {
+    setWeeklySummary(next)
+    try {
+      const response = await fetch("/api/account/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weeklySummary: next }),
+      })
+      if (!response.ok) throw new Error()
+    } catch {
+      setWeeklySummary(!next)
+      toast.error("Could not save that setting")
+    }
+  }
+
+  const resendVerification = async () => {
+    const result = await authClient.sendVerificationEmail({ email, callbackURL: "/dashboard/settings" })
+    if (result.error) {
+      toast.error("Could not send the email. Try again shortly.")
+      return
+    }
+    setVerificationSent(true)
+  }
   const usedPercent = Math.min((plan.used / plan.pageviewLimit) * 100, 100)
 
   const deleteAccount = async () => {
@@ -231,6 +274,35 @@ export function SettingsView({ email, sites: initialSites, plan }: { email: stri
               ))}
             </ul>
           )}
+        </Section>
+
+        <Section title="Email" description={email}>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <label htmlFor="weekly-summary" className="text-sm">
+                <span className="font-medium">Weekly summary</span>
+                <span className="mt-0.5 block text-muted-foreground">
+                  One email each Monday with your readers, top story and best source.
+                </span>
+              </label>
+              <Switch id="weekly-summary" checked={weeklySummary} onCheckedChange={toggleSummary} />
+            </div>
+            {emailSettings.configured && !emailSettings.verified && (
+              <p className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted px-4 py-3 text-sm">
+                {verificationSent ? "Confirmation email sent. Check your inbox." : "Your email address is not confirmed yet."}
+                {!verificationSent && (
+                  <Button variant="outline" size="sm" className="bg-transparent" onClick={resendVerification}>
+                    Send confirmation email
+                  </Button>
+                )}
+              </p>
+            )}
+            {!emailSettings.configured && (
+              <p className="rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground">
+                Email sending is not switched on for this site yet, so no emails will go out.
+              </p>
+            )}
+          </div>
         </Section>
 
         <Section title="Account" description={email}>

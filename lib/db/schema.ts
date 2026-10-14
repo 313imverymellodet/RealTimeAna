@@ -92,6 +92,9 @@ export const usage = pgTable("usage", {
   plan: text("plan").notNull().default("beta"),
   pageviews: integer("pageviews").notNull().default(0),
   periodStart: timestamp("period_start", { withTimezone: true }).notNull().defaultNow(),
+  // Weekly summary email: opt-out flag and when the last one went out
+  weeklySummary: boolean("weekly_summary").notNull().default(true),
+  summarySentAt: timestamp("summary_sent_at", { withTimezone: true }),
 })
 
 export const sites = pgTable(

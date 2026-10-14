@@ -14,9 +14,11 @@ interface AuthFormProps {
   providers: { github: boolean; google: boolean }
   // Website typed on the landing page; added to the new account right after sign-up
   domain?: string
+  // Shown on the sign-in page after a successful password reset
+  notice?: string
 }
 
-export function AuthForm({ mode, providers, domain }: AuthFormProps) {
+export function AuthForm({ mode, providers, domain, notice }: AuthFormProps) {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -110,7 +112,14 @@ export function AuthForm({ mode, providers, domain }: AuthFormProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-baseline justify-between">
+                <Label htmlFor="password">Password</Label>
+                {!isRegister && (
+                  <Link href="/auth/forgot" className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+                    Forgot password?
+                  </Link>
+                )}
+              </div>
               <Input
                 id="password"
                 name="password"
@@ -131,6 +140,24 @@ export function AuthForm({ mode, providers, domain }: AuthFormProps) {
             {error && (
               <p role="alert" className="text-sm text-red-600">
                 {error}
+              </p>
+            )}
+            {notice && !error && (
+              <p role="status" className="rounded-2xl bg-muted px-3 py-2 text-sm">
+                {notice}
+              </p>
+            )}
+            {isRegister && (
+              <p className="text-xs text-muted-foreground">
+                By creating an account you agree to the{" "}
+                <Link href="/terms" className="underline underline-offset-4">
+                  Terms
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="underline underline-offset-4">
+                  Privacy Policy
+                </Link>
+                .
               </p>
             )}
             <Button type="submit" disabled={pending} className="rounded-full bg-brand text-brand-foreground hover:bg-brand/90">

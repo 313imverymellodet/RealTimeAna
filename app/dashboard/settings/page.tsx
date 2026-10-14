@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { SettingsView } from "@/components/dashboard/settings-view"
 import { getSessionUser } from "@/lib/auth"
 import { getDb, schema } from "@/lib/db"
+import { emailConfigured } from "@/lib/email"
 import { getPlan } from "@/lib/plans"
 import { listSites } from "@/lib/sites"
 
@@ -21,9 +22,14 @@ export default async function SettingsPage() {
 
   return (
     <SettingsView
-      email={user.email}
+      userEmail={user.email}
       sites={sites.map(({ id, name, domain, publicToken }) => ({ id, name, domain, publicToken }))}
       plan={{ name: plan.name, pageviewLimit: plan.pageviewLimit, siteLimit: plan.siteLimit, used }}
+      email={{
+        configured: emailConfigured,
+        verified: Boolean(user.emailVerified),
+        weeklySummary: usage?.weeklySummary ?? true,
+      }}
     />
   )
 }

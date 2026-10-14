@@ -4,6 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { nextCookies } from "better-auth/next-js"
 import { headers } from "next/headers"
 import { getDb, schema } from "@/lib/db"
+import { emailConfigured, sendEmail } from "@/lib/email"
 
 // Social sign-in turns on automatically when its credentials are present
 export const socialProviders = {
@@ -26,6 +27,31 @@ function createAuth() {
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 8,
+      sendResetPassword: async ({ user, url }) => {
+        await sendEmail({
+          to: user.email,
+          subject: "Reset your Housecount password",
+          lines: [
+            "Someone asked to reset the password for this Housecount account.",
+            "If that was you, choose a new password with the button below. The link works for one hour.",
+            "If it was not you, ignore this email and your password stays the same.",
+          ],
+          button: { label: "Choose a new password", url },
+        })
+      },
+    },
+    emailVerification: {
+      // Only when email can actually be sent; sign-in never waits on it
+      sendOnSignUp: emailConfigured,
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: async ({ user, url }) => {
+        await sendEmail({
+          to: user.email,
+          subject: "Confirm your email for Housecount",
+          lines: ["Welcome to Housecount.", "Confirm this is your email address so we can reach you about your account."],
+          button: { label: "Confirm my email", url },
+        })
+      },
     },
     socialProviders: {
       ...(socialProviders.github && {

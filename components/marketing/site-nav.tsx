@@ -58,8 +58,11 @@ export function SiteFooter() {
               {link.label}
             </Link>
           ))}
-          <Link href="/docs#data" className="hover:text-foreground">
-            What we collect
+          <Link href="/privacy" className="hover:text-foreground">
+            Privacy
+          </Link>
+          <Link href="/terms" className="hover:text-foreground">
+            Terms
           </Link>
         </nav>
       </div>

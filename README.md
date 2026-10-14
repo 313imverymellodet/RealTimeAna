@@ -70,11 +70,16 @@ Statistics are aggregated in Postgres (`lib/stats.ts`); the browser only ever re
 Payments are not wired up. Every account is on the free beta plan defined in `lib/plans.ts`
 (100,000 pageviews a month, 10 websites). Change the numbers there.
 
+## Email
+
+Password reset, address confirmation and a Monday weekly summary are sent through Resend once
+`RESEND_API_KEY` and `EMAIL_FROM` are set. The summary job runs inside the server (`instrumentation.ts`),
+checks hourly, and claims each account in the database so nobody is emailed twice. Without the keys,
+messages are written to the server log and nothing is sent.
+
 ## Not built yet
 
-- Email: verification, password reset, weekly summaries
 - Paid plans and Stripe
-- Privacy policy and terms pages
 - Automatic deletion of old page views
 
 ## Checks
