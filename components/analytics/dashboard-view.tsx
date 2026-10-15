@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils"
 import { FunnelPanel } from "./funnel-panel"
 import { HousePanel } from "./house-panel"
 import { LinkBuilder } from "./link-builder"
+import { SocialPanel } from "./social-panel"
+import { StoriesPanel, TrendingPanel } from "./stories-panels"
 import { Panel, Segmented } from "./primitives"
 import { usePolling } from "./use-polling"
 import { VisitorsPanel } from "./visitors-panel"
@@ -41,6 +43,9 @@ interface DashboardViewProps {
   visitorsUrl?: string
   // The site's domain; turns on the tracked-link builder
   siteDomain?: string
+  // Connected Bluesky / Mastodon accounts; `canEditSocial` adds connect and disconnect
+  socialUrl?: string
+  canEditSocial?: boolean
 }
 
 // Check every few seconds until the first page view arrives, then once a minute
@@ -170,10 +175,11 @@ export function DashboardView({
   canEditFunnels = false,
   visitorsUrl,
   siteDomain,
+  socialUrl,
+  canEditSocial = false,
 }: DashboardViewProps) {
   const [range, setRange] = useState<RangeKey>("7d")
   const [metric, setMetric] = useState<Metric>("visitors")
-  const [pageTab, setPageTab] = useState<"pages" | "entryPages">("pages")
   const [sourceTab, setSourceTab] = useState<"channels" | "networks" | "referrers" | "campaigns">("channels")
   const [linking, setLinking] = useState(false)
   const [locationTab, setLocationTab] = useState<"countries" | "cities">("countries")
@@ -364,27 +370,7 @@ export function DashboardView({
           </section>
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <Panel
-              title="Pages"
-              action={
-                <Segmented
-                  value={pageTab}
-                  onChange={setPageTab}
-                  label="Page breakdown"
-                  options={[
-                    { value: "pages", label: "Top" },
-                    { value: "entryPages", label: "Entry" },
-                  ]}
-                />
-              }
-            >
-              <BarList
-                rows={stats?.[pageTab]}
-                loading={loading}
-                empty="No page views in this period"
-                renderLabel={(label) => <span className="font-mono text-[13px]">{label}</span>}
-              />
-            </Panel>
+            <TrendingPanel trending={realtime?.trending} loading={realtime === null} />
 
             <Panel
               title="Sources"
@@ -437,6 +423,20 @@ export function DashboardView({
                 </p>
               )}
             </Panel>
+
+            <StoriesPanel
+              stories={stats?.stories}
+              entryPages={stats?.entryPages}
+              loading={loading}
+              entryList={(rows) => (
+                <BarList
+                  rows={rows}
+                  loading={loading}
+                  empty="No page views in this period"
+                  renderLabel={(label) => <span className="font-mono text-[13px]">{label}</span>}
+                />
+              )}
+            />
 
             <Panel title="Goals">
               {loading ? (
@@ -541,6 +541,7 @@ export function DashboardView({
             </Panel>
           </div>
 
+          {socialUrl && <SocialPanel url={socialUrl} canEdit={canEditSocial} />}
           {funnelsUrl && <FunnelPanel url={funnelsUrl} query={query} canEdit={canEditFunnels} />}
           {visitorsUrl && <VisitorsPanel url={visitorsUrl} query={query} />}
           {siteDomain && <LinkBuilder open={linking} onOpenChange={setLinking} domain={siteDomain} />}

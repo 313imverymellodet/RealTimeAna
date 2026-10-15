@@ -1,6 +1,6 @@
 # Housecount
 
-Know who's in the house. Live web analytics without cookies: a 1.7 KB tracking script, an ingestion endpoint and a dashboard.
+Know who's in the house. Live web analytics without cookies: a 1.2 KB tracking script, an ingestion endpoint and a dashboard.
 
 Next.js 16 (App Router) · Postgres with Drizzle · Better Auth · deployed on Railway.
 
@@ -14,7 +14,8 @@ pnpm db:migrate
 pnpm dev
 ```
 
-`pnpm db:local` runs PGlite on port 5433 and keeps its data in `./.pglite`. Any real Postgres works too;
+`pnpm db:local` runs PGlite on port 5433 and keeps its data in `./.pglite`. Set `DATABASE_POOL_MAX=1`
+with it, since it handles one connection at a time reliably. Any real Postgres works too;
 point `DATABASE_URL` at it.
 
 ## Deploying to Railway
@@ -39,7 +40,8 @@ Commit the generated SQL.
 
 ## How tracking works
 
-Sites embed `public/tracker.js` with their site id. It posts pageview and duration events to `/api/track`.
+Sites embed `public/tracker.js` with their site id. That file is generated: edit the readable
+source in `tracker/tracker.js` and run `pnpm build:tracker` (the build does this too). It posts pageview and duration events to `/api/track`.
 
 - **No cookies or browser storage.** A visitor is a hash of site + IP + user agent with a random salt that is
   replaced and deleted every UTC day (`lib/visitor.ts`). IP addresses are never stored.
@@ -82,10 +84,20 @@ messages are written to the server log and nothing is sent.
 - Paid plans and Stripe
 - Automatic deletion of old page views
 
-## Checks
+## Social accounts
+
+Owners can connect a Bluesky or Mastodon account by handle (`lib/social.ts`). Both networks publish
+profiles and posts openly, so no keys are needed. Follower counts are saved daily by the hourly job in
+`instrumentation.ts`. Readers are credited to a post by its tracked link's campaign, or else to the
+latest linking post in the previous 48 hours.
+
+## Tests
 
 ```bash
-pnpm typecheck
-pnpm lint
-pnpm build
+pnpm test     # unit tests, the served tracker in a fake browser, and the full pipeline on in-memory Postgres
+pnpm check    # types, lint and tests
+pnpm build    # minifies the tracker, runs the tests, then builds; a failing test stops a deploy
 ```
+
+The pipeline tests start PGlite in-process, apply the real migrations and call the real `/api/track`
+handler, so they need no database or network.

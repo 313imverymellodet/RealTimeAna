@@ -40,6 +40,30 @@ export interface BreakdownRow {
   revenueCents?: number
 }
 
+export interface StoryRow {
+  path: string
+  readers: number
+  views: number
+  // Average seconds visible, over views that reported a time
+  avgSeconds: number
+  // Average percentage of the page reached, or null before any depth was reported
+  depth: number | null
+  // Share of views that reached 90% of the page
+  finished: number | null
+}
+
+export interface TrendingStory {
+  path: string
+  // People on the page in the last 5 minutes
+  now: number
+  // Distinct readers over the last 30 minutes
+  recent: number
+  // Readers in each 3-minute slice of the last 30 minutes, oldest first
+  spark: number[]
+  // Picking up speed: the last 10 minutes are well ahead of the 20 before
+  rising: boolean
+}
+
 export interface GoalRow {
   name: string
   completions: number
@@ -59,6 +83,7 @@ export interface Stats {
   // Distinct visitors so far today
   today: number
   pages: BreakdownRow[]
+  stories: StoryRow[]
   entryPages: BreakdownRow[]
   channels: BreakdownRow[]
   networks: BreakdownRow[]
@@ -99,6 +124,7 @@ export interface Realtime {
   seats: Seat[]
   // The most recent sessions to start, newest first
   arrivals: Arrival[]
+  trending: TrendingStory[]
 }
 
 // Start of a range in the viewer's time zone, as a SQL timestamp expression
@@ -111,12 +137,15 @@ export async function rows<T>(query: SQL): Promise<T[]> {
   return result.rows as T[]
 }
 
-async function totals(siteId: string, from: SQL, to: SQL): Promise<Totals> {
+// `to` is exclusive; leave it out for "up to and including right now", so a
+// visit recorded in the same instant as the query is never missed
+async function totals(siteId: string, from: SQL, to?: SQL): Promise<Totals> {
+  const upTo = to ? sql`and created_at < ${to}` : sql``
   const [row] = await rows<Record<string, string | null>>(sql`
     with scoped as (
       select visitor_id, session_id, duration
       from page_views
-      where site_id = ${siteId} and created_at >= ${from} and created_at < ${to}
+      where site_id = ${siteId} and created_at >= ${from} ${upTo}
     ),
     per_session as (
       select session_id, count(*) as views, sum(duration) as seconds
@@ -126,7 +155,7 @@ async function totals(siteId: string, from: SQL, to: SQL): Promise<Totals> {
     goals as (
       select visitor_id, revenue_cents
       from events
-      where site_id = ${siteId} and created_at >= ${from} and created_at < ${to}
+      where site_id = ${siteId} and created_at >= ${from} ${upTo}
     )
     select
       (select count(distinct visitor_id) from scoped) as visitors,
@@ -192,12 +221,12 @@ export async function getStats(siteId: string, range: RangeKey, timeZone: string
   // "Today" starts at local midnight; the other ranges cover the last N local days including today
   const from = sql`(date_trunc('day', now() at time zone ${timeZone}) - make_interval(days => ${days - 1}::int)) at time zone ${timeZone}`
   const previousFrom = sql`(date_trunc('day', now() at time zone ${timeZone}) - make_interval(days => ${days * 2 - 1}::int)) at time zone ${timeZone}`
-  const now = sql`now()`
   const step = unit === "hour" ? sql`interval '1 hour'` : sql`interval '1 day'`
   const unitSql = sql.raw(`'${unit}'`)
 
   const referrerColumn = sql`coalesce(referrer, 'Direct / none')`
-  const campaignColumn = sql`coalesce(utm_campaign, utm_source)`
+  // A post or campaign is named by utm_campaign (the tracker also files ?ref=name there)
+  const campaignColumn = sql`utm_campaign`
   const countryColumn = sql`coalesce(country, 'Unknown')`
   const channelColumn = sql`coalesce(channel, 'Direct')`
   const networkColumn = sql`coalesce(network, referrer, 'Other')`
@@ -227,8 +256,9 @@ export async function getStats(siteId: string, range: RangeKey, timeZone: string
     networkRevenue,
     record,
     today,
+    stories,
   ] = await Promise.all([
-    totals(siteId, from, now),
+    totals(siteId, from),
     totals(siteId, previousFrom, from),
     rows<{ t: string; visitors: string; pageviews: string; revenue: string }>(sql`
       with buckets as (
@@ -318,6 +348,20 @@ export async function getStats(siteId: string, range: RangeKey, timeZone: string
       where site_id = ${siteId}
         and created_at >= date_trunc('day', now() at time zone ${timeZone}) at time zone ${timeZone}
     `),
+    rows<{ path: string; readers: string; views: string; seconds: string | null; depth: string | null; finished: string | null }>(sql`
+      select
+        path,
+        count(distinct visitor_id) as readers,
+        count(*) as views,
+        avg(duration) filter (where duration > 0) as seconds,
+        avg(depth) filter (where depth is not null) as depth,
+        avg(case when depth >= 90 then 100.0 else 0 end) filter (where depth is not null) as finished
+      from page_views
+      where site_id = ${siteId} and created_at >= ${from}
+      group by path
+      order by readers desc, views desc
+      limit 12
+    `),
   ])
 
   return {
@@ -335,6 +379,14 @@ export async function getStats(siteId: string, range: RangeKey, timeZone: string
     record: record[0] ? { visitors: Number(record[0].visitors), day: record[0].day } : null,
     today: Number(today[0]?.visitors ?? 0),
     pages,
+    stories: stories.map((r) => ({
+      path: r.path,
+      readers: Number(r.readers),
+      views: Number(r.views),
+      avgSeconds: Math.round(Number(r.seconds ?? 0)),
+      depth: r.depth === null ? null : Math.round(Number(r.depth)),
+      finished: r.finished === null ? null : Math.round(Number(r.finished)),
+    })),
     entryPages,
     channels: withRevenue(channels, channelRevenue),
     networks: withRevenue(networks, networkRevenue),
@@ -355,7 +407,7 @@ export async function getStats(siteId: string, range: RangeKey, timeZone: string
 }
 
 export async function getRealtime(siteId: string): Promise<Realtime> {
-  const [[count], pages, points, seats, arrivals] = await Promise.all([
+  const [[count], pages, points, seats, arrivals, minutes] = await Promise.all([
     rows<{ visitors: string }>(sql`
       select count(distinct visitor_id) as visitors
       from page_views
@@ -401,7 +453,47 @@ export async function getRealtime(siteId: string): Promise<Realtime> {
       order by created_at desc
       limit 5
     `),
+    // Readers per page per 3-minute slice over the last 30 minutes (slice 0 is the newest)
+    rows<{ path: string; slice: number; readers: string }>(sql`
+      select path, floor(extract(epoch from now() - created_at) / 180)::int as slice, count(distinct visitor_id) as readers
+      from page_views
+      where site_id = ${siteId} and created_at >= now() - interval '30 minutes'
+      group by 1, 2
+    `),
   ])
+
+  // Rank pages by people on them now, then by the last half hour
+  const byPath = new Map<string, number[]>()
+  for (const row of minutes) {
+    const slots = byPath.get(row.path) ?? Array<number>(10).fill(0)
+    const slice = Math.min(Math.max(row.slice, 0), 9)
+    slots[9 - slice] += Number(row.readers)
+    byPath.set(row.path, slots)
+  }
+  const nowByPath = new Map(pages.map((p) => [p.label, Number(p.visitors)]))
+  const recentByPath = await rows<{ path: string; readers: string }>(sql`
+    select path, count(distinct visitor_id) as readers
+    from page_views
+    where site_id = ${siteId} and created_at >= now() - interval '30 minutes'
+    group by 1
+    order by readers desc
+    limit 20
+  `)
+  const trending: TrendingStory[] = recentByPath
+    .map((row) => {
+      const spark = byPath.get(row.path) ?? Array<number>(10).fill(0)
+      const lastTen = spark.slice(-3).reduce((a, b) => a + b, 0) + spark[6] / 3
+      const before = spark.slice(0, 6).reduce((a, b) => a + b, 0) + (spark[6] * 2) / 3
+      return {
+        path: row.path,
+        now: nowByPath.get(row.path) ?? 0,
+        recent: Number(row.readers),
+        spark,
+        rising: lastTen >= 3 && lastTen > before * 0.75,
+      }
+    })
+    .sort((a, b) => b.now - a.now || b.recent - a.recent)
+    .slice(0, 5)
 
   return {
     visitors: Number(count.visitors),
@@ -409,5 +501,6 @@ export async function getRealtime(siteId: string): Promise<Realtime> {
     points,
     seats,
     arrivals: arrivals.map((a) => ({ ...a, at: new Date(a.at).toISOString() })),
+    trending,
   }
 }

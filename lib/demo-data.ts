@@ -1,5 +1,6 @@
 import type { FunnelResult } from "@/lib/funnels"
 import type { JourneyStep, VisitorSummary } from "@/lib/journeys"
+import type { AccountOverview } from "@/lib/social"
 import type { BreakdownRow, RangeKey, Realtime, Stats, Totals } from "@/lib/stats"
 import { RANGES } from "@/lib/stats"
 
@@ -94,6 +95,24 @@ export function getDemoStats(range: RangeKey): Stats {
       ["/newsletter", 0.05],
       ["/sports/friday-recap", 0.03],
     ]),
+    stories: (
+      [
+        ["/", 0.46, 38, 71, 22],
+        ["/news/city-budget-vote", 0.21, 214, 83, 61],
+        ["/membership", 0.19, 95, 64, 40],
+        ["/reviews/best-of-2026", 0.12, 302, 58, 27],
+        ["/news/stadium-deal-explained", 0.09, 251, 77, 52],
+        ["/newsletter", 0.05, 41, 92, 86],
+        ["/sports/friday-recap", 0.03, 146, 49, 18],
+      ] as [string, number, number, number, number][]
+    ).map(([path, share, avgSeconds, depth, finished]) => ({
+      path,
+      readers: Math.round(visitors * share),
+      views: Math.round(visitors * share * 1.3),
+      avgSeconds,
+      depth,
+      finished,
+    })),
     record: { visitors: 2140, day: series[Math.max(series.length - 4, 0)].t.slice(0, 10) },
     today: unit === "hour" ? visitors : series[series.length - 1].visitors,
     channels: share(
@@ -211,22 +230,47 @@ export function getDemoRealtime(): Realtime {
   // Changes every 10 seconds so the demo visibly moves
   const random = seeded(Math.floor(Date.now() / 10_000))
   const points = CITIES.filter(() => random() > 0.35).map(([lat, lng, city, country]) => ({ lat, lng, city, country }))
-  const visitors = points.length + Math.floor(random() * 12) + 6
+
+  // Shaped curves so the sparklines read like real traffic; everything else is derived
+  // from them, so the house, the stage and the top-stories list always agree
+  const curves: [string, number[], boolean][] = [
+    ["/news/city-budget-vote", [1, 1, 2, 2, 3, 4, 5, 6, 7, 8], true],
+    ["/", [5, 4, 6, 5, 5, 6, 5, 4, 5, 6], false],
+    ["/membership", [2, 3, 2, 3, 3, 2, 3, 3, 2, 3], false],
+    ["/reviews/best-of-2026", [4, 4, 3, 3, 3, 2, 2, 2, 2, 2], false],
+    ["/news/stadium-deal-explained", [0, 0, 1, 1, 1, 1, 2, 2, 3, 4], true],
+  ]
+  const trending = curves
+    .map(([path, shape, rising]) => {
+      const spark = shape.map((n) => Math.max(0, n + Math.round((random() - 0.5) * 2)))
+      return { path, spark, rising, now: Math.max(spark[spark.length - 1], 1), recent: spark.reduce((a, b) => a + b, 0) }
+    })
+    .sort((a, b) => b.now - a.now || b.recent - a.recent)
+  const visitors = trending.reduce((sum, story) => sum + story.now, 0)
+  const readingPaths = trending.flatMap((story) => Array<string>(story.now).fill(story.path))
 
   const mix = ["Search", "Search", "Social", "Social", "Social", "Direct", "Direct", "Newsletter", "Referral"]
-  const seats = Array.from({ length: visitors }, (_, i) => ({
-    // Stable ids so most people keep their seat between refreshes
-    id: `demo${String((i * 7919) % 9973).padStart(8, "0")}`,
-    channel: mix[(i * 5 + 3) % mix.length],
-    source: { Search: "google.com", Social: ["X", "Facebook", "Reddit"][i % 3], Newsletter: "Sunday newsletter", Referral: "news.google.com", Direct: null }[
-      mix[(i * 5 + 3) % mix.length]
-    ] as string | null,
-    path: ["/", "/news/city-budget-vote", "/membership", "/reviews/best-of-2026", "/"][(i * 3) % 5],
-    country: ["US", "US", "DE", "GB", "CA", "IN"][(i * 7) % 6],
-  }))
+  const sources: Record<string, (i: number) => string | null> = {
+    Search: () => "google.com",
+    Social: (i) => ["X", "Facebook", "Reddit", "Bluesky"][i % 4],
+    Newsletter: () => "Sunday newsletter",
+    Referral: () => "news.google.com",
+    Direct: () => null,
+  }
+  const seats = Array.from({ length: visitors }, (_, i) => {
+    const channel = mix[(i * 5 + 3) % mix.length]
+    return {
+      // Stable ids so most people keep their seat between refreshes
+      id: `demo${String((i * 7919) % 9973).padStart(8, "0")}`,
+      channel,
+      source: sources[channel](i),
+      path: readingPaths[i],
+      country: ["US", "US", "DE", "GB", "CA", "IN"][(i * 7) % 6],
+    }
+  })
   const arrivals = points.slice(0, 4).map((point, i) => ({
     at: new Date(Date.now() - (i * 55 + 8) * 1000).toISOString(),
-    channel: mix[(i * 2 + Math.floor(random() * 3)) % mix.length],
+    channel: ["Search", "Social", "Newsletter", "Social"][i],
     source: ["google.com", "X", "Sunday newsletter", "Reddit"][i],
     city: point.city,
     country: point.country,
@@ -238,12 +282,8 @@ export function getDemoRealtime(): Realtime {
     points,
     seats,
     arrivals,
-    pages: [
-      { label: "/", visitors: Math.ceil(visitors * 0.45) },
-      { label: "/membership", visitors: Math.ceil(visitors * 0.25) },
-      { label: "/news/city-budget-vote", visitors: Math.ceil(visitors * 0.15) },
-      { label: "/reviews/best-of-2026", visitors: Math.ceil(visitors * 0.1) },
-    ],
+    trending,
+    pages: trending.map((story) => ({ label: story.path, visitors: story.now })),
   }
 }
 
@@ -396,4 +436,92 @@ export function getDemoJourney(visitorId: string): JourneyStep[] {
     seconds,
     revenueCents,
   }))
+}
+
+export function getDemoSocial(): AccountOverview[] {
+  const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString()
+  return [
+    {
+      id: "demo-bluesky",
+      network: "bluesky",
+      networkLabel: "Bluesky",
+      handle: "northsidepost.bsky.social",
+      displayName: "The Northside Post",
+      avatarUrl: null,
+      profileUrl: "https://bsky.app",
+      followers: 4812,
+      posts: 1294,
+      followerChange: 186,
+      trackingSince: "2026-09-01",
+      readersThisWeek: 742,
+      stale: false,
+      recentPosts: [
+        {
+          id: "p1",
+          url: "https://bsky.app",
+          text: "Council votes 7-2 to pass the budget. What changes for libraries, buses and parks, explained in five minutes.",
+          createdAt: hoursAgo(3),
+          likes: 412,
+          reposts: 138,
+          replies: 57,
+          links: [],
+          linksToSite: true,
+          readers: 318,
+        },
+        {
+          id: "p2",
+          url: "https://bsky.app",
+          text: "Friday recap is up: three upsets, one buzzer beater and the play everyone is still arguing about.",
+          createdAt: hoursAgo(20),
+          likes: 96,
+          reposts: 21,
+          replies: 14,
+          links: [],
+          linksToSite: true,
+          readers: 84,
+        },
+        {
+          id: "p3",
+          url: "https://bsky.app",
+          text: "We are hiring a part-time photographer for game nights. Send us your best shot.",
+          createdAt: hoursAgo(31),
+          likes: 151,
+          reposts: 47,
+          replies: 22,
+          links: [],
+          linksToSite: false,
+          readers: null,
+        },
+      ],
+    },
+    {
+      id: "demo-mastodon",
+      network: "mastodon",
+      networkLabel: "Mastodon",
+      handle: "northside@mastodon.social",
+      displayName: "Northside Post",
+      avatarUrl: null,
+      profileUrl: "https://mastodon.social",
+      followers: 1206,
+      posts: 640,
+      followerChange: 34,
+      trackingSince: "2026-09-01",
+      readersThisWeek: 131,
+      stale: false,
+      recentPosts: [
+        {
+          id: "m1",
+          url: "https://mastodon.social",
+          text: "The stadium deal, explained without the spin: who pays, who profits, and what happens if it falls through.",
+          createdAt: hoursAgo(9),
+          likes: 64,
+          reposts: 39,
+          replies: 11,
+          links: [],
+          linksToSite: true,
+          readers: 97,
+        },
+      ],
+    },
+  ]
 }

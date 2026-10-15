@@ -57,6 +57,7 @@ const SECTIONS = [
   { id: "verify", label: "Check it works" },
   { id: "goals", label: "Subscribers and revenue" },
   { id: "social", label: "Social and tracked links" },
+  { id: "accounts", label: "Bluesky and Mastodon" },
   { id: "funnels", label: "Funnels and journeys" },
   { id: "identify", label: "Follow members" },
   { id: "data", label: "What we collect" },
@@ -70,6 +71,7 @@ const COLLECTED = [
   ["Device", "Device type, browser and operating system, read from the user agent."],
   ["Location", "Country, region and city, derived from the IP address and rounded to roughly 11 km."],
   ["Time on page", "Seconds the tab was visible."],
+  ["Read depth", "How far down the page the reader scrolled, as a percentage."],
   ["Goals", "The goal names and revenue amounts your own code reports."],
   ["User link", "If you identify signed-in users: a one-way hash of the ID you pass. The ID itself is not stored."],
 ]
@@ -197,9 +199,26 @@ export default function DocsPage() {
             </p>
             <CodeBlock code={TRACKED_LINK} />
             <p className="text-sm text-muted-foreground">
-              Give each post its own name and the Post tab shows what that one post brought in. Housecount measures
-              the readers a post sends to your site. It does not read follower counts, likes or impressions from the
-              networks themselves.
+              Give each post its own name and the Post tab shows what that one post brought in. Without a tracked
+              link, readers who arrive from a post are still counted under the network, but not under the post.
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <Heading id="accounts">Bluesky and Mastodon accounts</Heading>
+            <p className="text-muted-foreground">
+              Connect your publication&apos;s Bluesky or Mastodon account from the Social accounts panel. Only the handle
+              is needed: both networks publish profiles and posts openly, so there is no password and no app to approve.
+            </p>
+            <p className="text-muted-foreground">
+              Housecount then shows your follower count and its change over the week, your recent posts with their
+              likes, reposts and replies, and for each post that links to your site, how many readers it sent.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              A post that uses a tracked link gets exactly the readers who clicked it. For other posts, readers arriving
+              from that network are credited to your most recent linking post from the previous 48 hours, so close
+              together posts can share credit imperfectly. Follower history starts the day you connect. X, Instagram,
+              Facebook, Threads and TikTok are not supported yet: they require approved developer access.
             </p>
           </section>
 

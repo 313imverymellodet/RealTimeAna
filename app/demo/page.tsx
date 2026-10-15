@@ -34,6 +34,7 @@ export default function DemoPage() {
           funnelsUrl="/api/demo/funnels"
           visitorsUrl="/api/demo/visitors"
           siteDomain="northsidepost.example"
+          socialUrl="/api/demo/social"
         />
       </main>
       <SiteFooter />

@@ -14,7 +14,7 @@ const FEATURES = [
   {
     icon: Globe2,
     title: "Watch a story land",
-    body: "Every reader gets a seat. Watch the house fill as a story takes off, see what is showing right now, and know the moment you set a new house record.",
+    body: "Every reader gets a seat. Watch the house fill as a story takes off, see which stories are rising right now, and how far down the page people really read.",
     span: "md:col-span-2",
   },
   {
@@ -26,7 +26,7 @@ const FEATURES = [
   {
     icon: Link2,
     title: "Know what brought them",
-    body: "Search, social, newsletter or direct: each seat is coloured by how the reader arrived. Tracked links show what every single post on X, Facebook or Bluesky brought in.",
+    body: "Search, social, newsletter or direct: each seat is coloured by how the reader arrived. Connect Bluesky or Mastodon to see followers and the readers each post sent.",
     span: "",
   },
   {
@@ -56,7 +56,7 @@ const FEATURES = [
   {
     icon: Feather,
     title: "One line to install",
-    body: "A single deferred script tag, about 1.7 KB gzipped. It works on WordPress, Ghost, Webflow, Next.js and anything else that serves HTML.",
+    body: "A single deferred script tag, about 1.2 KB gzipped. It works on WordPress, Ghost, Webflow, Next.js and anything else that serves HTML.",
     span: "md:col-span-3",
   },
 ]
@@ -90,7 +90,7 @@ const FAQ = [
   },
   {
     q: "Will it slow my site down?",
-    a: "The script is about 1.7 KB gzipped, loads with defer, and sends one small request per page view.",
+    a: "The script is about 1.2 KB gzipped, loads with defer, and sends one small request per page view.",
   },
 ]
 
@@ -165,6 +165,7 @@ export default function Home() {
                 funnelsUrl="/api/demo/funnels"
                 visitorsUrl="/api/demo/visitors"
                 siteDomain="northsidepost.example"
+                socialUrl="/api/demo/social"
               />
             </div>
           </div>

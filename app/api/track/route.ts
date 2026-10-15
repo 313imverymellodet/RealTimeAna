@@ -112,10 +112,17 @@ export async function POST(request: NextRequest) {
 
     if (type === "duration") {
       const seconds = Number(body.duration)
+      const depth = Number(body.depth)
       if (Number.isFinite(seconds) && seconds >= 0) {
         await db
           .update(schema.pageViews)
-          .set({ duration: Math.min(Math.round(seconds), 86_400) })
+          .set({
+            duration: Math.min(Math.round(seconds), 86_400),
+            // Keep the furthest point reached across repeated reports for the same view
+            ...(Number.isFinite(depth) && depth >= 0
+              ? { depth: sql`greatest(coalesce(${schema.pageViews.depth}, 0), ${Math.min(Math.round(depth), 100)})` }
+              : {}),
+          })
           .where(and(eq(schema.pageViews.id, id), eq(schema.pageViews.siteId, siteId)))
       }
       return json({ success: true })

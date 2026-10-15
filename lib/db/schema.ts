@@ -141,6 +141,8 @@ export const pageViews = pgTable(
     browser: text("browser"),
     os: text("os"),
     duration: integer("duration").notNull().default(0),
+    // Furthest point the reader scrolled to, as a percentage of the page
+    depth: integer("depth"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -210,6 +212,42 @@ export const funnels = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("funnels_site_idx").on(t.siteId)],
+)
+
+// Public social accounts a site owner connects (no login to the network needed)
+export const socialAccounts = pgTable(
+  "social_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .notNull()
+      .references(() => sites.id, { onDelete: "cascade" }),
+    // "bluesky" or "mastodon"
+    network: text("network").notNull(),
+    // Normalised handle: "name.bsky.social", or "user@instance.social" for Mastodon
+    handle: text("handle").notNull(),
+    // The network's own id: a Bluesky DID or a Mastodon account id
+    remoteId: text("remote_id").notNull(),
+    displayName: text("display_name"),
+    avatarUrl: text("avatar_url"),
+    profileUrl: text("profile_url").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("social_accounts_site_handle_idx").on(t.siteId, t.network, t.handle)],
+)
+
+// One follower count per account per UTC day, for growth over time
+export const socialSnapshots = pgTable(
+  "social_snapshots",
+  {
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => socialAccounts.id, { onDelete: "cascade" }),
+    day: date("day").notNull(),
+    followers: integer("followers").notNull(),
+    posts: integer("posts").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.accountId, t.day] })],
 )
 
 // One random salt per UTC day for visitor hashing. Old rows are deleted, which

@@ -44,7 +44,7 @@ export default function PrivacyPage() {
           <li>The hostname of the site that linked to it, and campaign tags (utm_source, utm_medium, utm_campaign) if the link carried them.</li>
           <li>Device type, browser and operating system, read from the browser&apos;s user agent.</li>
           <li>Country, region and city, worked out from the IP address, with coordinates rounded to roughly 11 km.</li>
-          <li>How long the page was visible.</li>
+          <li>How long the page was visible, and how far down it the visitor scrolled.</li>
           <li>Goals the site reports, such as a signup, and any amount of money the site attaches to them.</li>
         </ul>
         <p>
@@ -75,6 +75,7 @@ export default function PrivacyPage() {
         <ul className="space-y-1.5">
           <li>Your email address and a securely hashed password, or your profile from Google or GitHub if you sign in that way.</li>
           <li>The websites you add and your settings.</li>
+          <li>If you connect a Bluesky or Mastodon account: its public handle, and the public profile details, follower counts and posts we fetch from that network.</li>
           <li>A sign-in session, including the IP address and browser used to sign in, so we can keep your account secure.</li>
         </ul>
         <p>
@@ -96,6 +97,7 @@ export default function PrivacyPage() {
         <p>We use a small number of service providers, who may only process data on our instructions:</p>
         <ul className="space-y-1.5">
           <li><strong>Railway</strong>, which hosts the application and its database.</li>
+          <li><strong>Bluesky and Mastodon servers</strong>, which we ask for public account information only when you connect an account. We send them the handle and nothing else.</li>
           <li><strong>Resend</strong>, which delivers our emails to customers.</li>
         </ul>
         <p>

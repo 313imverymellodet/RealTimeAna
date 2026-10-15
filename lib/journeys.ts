@@ -63,7 +63,7 @@ export async function listVisitors(siteId: string, range: RangeKey, timeZone: st
         (array_agg(browser order by created_at))[1] as browser,
         (array_agg(os order by created_at))[1] as os,
         (array_agg(referrer order by created_at))[1] as referrer,
-        (array_agg(coalesce(utm_campaign, utm_source) order by created_at))[1] as campaign
+        (array_agg(utm_campaign order by created_at))[1] as campaign
       from views
       group by person
       order by last_seen desc

@@ -212,6 +212,8 @@ export function DashboardShell({ email, sites: initialSites }: { email: string; 
             funnelsUrl={`/api/sites/${selected.id}/funnels`}
             canEditFunnels
             siteDomain={selected.domain}
+            socialUrl={`/api/sites/${selected.id}/social`}
+            canEditSocial
             visitorsUrl={`/api/sites/${selected.id}/visitors`}
             emptyState={<InstallPanel siteId={selected.id} domain={selected.domain} />}
           />
