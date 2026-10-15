@@ -152,6 +152,52 @@
   .footlight {
     animation: footlight 2.8s ease-in-out infinite;
   }
+
+  /* Readers walking to and from their seats (sprite sheets from art/) */
+  .crowd-sprite {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-repeat: no-repeat;
+    image-rendering: auto;
+    filter: drop-shadow(0 2px 1.5px rgb(0 0 0 / 0.22));
+    will-change: transform;
+  }
+
+  /* The usher at the doors: 8-frame loops, idle forever, wave once */
+  .usher {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-image: url(/sprites/usher.webp);
+    background-size: 800% 200%;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 2px 1.5px rgb(0 0 0 / 0.2));
+  }
+  .usher-idle {
+    background-position-y: 0%;
+    animation: sprite-frames 1.6s steps(8) infinite;
+  }
+  .usher-wave {
+    background-position-y: 100%;
+    animation: sprite-frames 0.9s steps(8) 1;
+  }
+  /* Flashlight glow while waving someone in */
+  .usher-beam {
+    position: absolute;
+    left: 6%;
+    top: -18%;
+    width: 46%;
+    height: 46%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgb(255 236 170 / 0.85), rgb(245 166 35 / 0) 70%);
+    animation: beam 0.9s ease-out 1 both;
+  }
+
+  /* "+3" floating up from the count as people come in */
+  .count-bump {
+    animation: count-bump 1.4s ease-out both;
+  }
   .arrival {
     animation: arrival 0.5s ease-out both;
   }
@@ -182,6 +228,44 @@
   to {
     transform: scale(3.2);
     opacity: 0;
+  }
+}
+
+@keyframes sprite-frames {
+  from {
+    background-position-x: 0%;
+  }
+  to {
+    background-position-x: 114.2857%;
+  }
+}
+
+@keyframes beam {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@keyframes count-bump {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px);
   }
 }
 

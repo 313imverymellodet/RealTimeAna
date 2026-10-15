@@ -91,6 +91,20 @@ profiles and posts openly, so no keys are needed. Follower counts are saved dail
 `instrumentation.ts`. Readers are credited to a post by its tracked link's campaign, or else to the
 latest linking post in the previous 48 hours.
 
+## Sprites
+
+The readers and the usher in the seat map are rendered in Blender from `art/build_sprites.py` and
+packed into `public/sprites/` by `art/compose_sprites.py`:
+
+```bash
+/Applications/Blender.app/Contents/MacOS/Blender -b --python art/build_sprites.py -- /tmp/frames
+python3 art/compose_sprites.py /tmp/frames   # needs Pillow
+```
+
+Each reader sheet is 8 frames across, with rows for walking up, right, down and left; the body colour
+matches a traffic channel. The usher sheet has an idle row and a wave row. People who prefer reduced
+motion get the seat map without walkers.
+
 ## Tests
 
 ```bash

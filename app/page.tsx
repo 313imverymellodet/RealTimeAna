@@ -166,6 +166,7 @@ export default function Home() {
                 visitorsUrl="/api/demo/visitors"
                 siteDomain="northsidepost.example"
                 socialUrl="/api/demo/social"
+                syncUrl={false}
               />
             </div>
           </div>

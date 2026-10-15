@@ -17,7 +17,10 @@ import { SocialPanel } from "./social-panel"
 import { StoriesPanel, TrendingPanel } from "./stories-panels"
 import { Panel, Segmented } from "./primitives"
 import { usePolling } from "./use-polling"
+import { useQueryParam } from "./use-query-param"
 import { VisitorsPanel } from "./visitors-panel"
+
+const RANGE_KEYS: RangeKey[] = ["today", "7d", "30d", "90d"]
 
 const RANGE_OPTIONS: { value: RangeKey; label: string }[] = [
   { value: "today", label: "Today" },
@@ -46,6 +49,8 @@ interface DashboardViewProps {
   // Connected Bluesky / Mastodon accounts; `canEditSocial` adds connect and disconnect
   socialUrl?: string
   canEditSocial?: boolean
+  // Keep the date range in the address bar (off for embedded previews)
+  syncUrl?: boolean
 }
 
 // Check every few seconds until the first page view arrives, then once a minute
@@ -160,8 +165,8 @@ function StatTile({
 function formatTick(t: string, unit: Stats["unit"]) {
   const date = new Date(t)
   return unit === "hour"
-    ? date.toLocaleTimeString("en", { hour: "numeric" })
-    : date.toLocaleDateString("en", { month: "short", day: "numeric" })
+    ? date.toLocaleTimeString(undefined, { hour: "numeric" })
+    : date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
 }
 
 export function DashboardView({
@@ -177,8 +182,12 @@ export function DashboardView({
   siteDomain,
   socialUrl,
   canEditSocial = false,
+  syncUrl = true,
 }: DashboardViewProps) {
-  const [range, setRange] = useState<RangeKey>("7d")
+  const [urlRange, setUrlRange] = useQueryParam<RangeKey>("range", "7d", RANGE_KEYS)
+  const [localRange, setLocalRange] = useState<RangeKey>("7d")
+  const range = syncUrl ? urlRange : localRange
+  const setRange = syncUrl ? setUrlRange : setLocalRange
   const [metric, setMetric] = useState<Metric>("visitors")
   const [sourceTab, setSourceTab] = useState<"channels" | "networks" | "referrers" | "campaigns">("channels")
   const [linking, setLinking] = useState(false)
@@ -328,7 +337,7 @@ export function DashboardView({
                       formatter={(value, name) =>
                         name === "revenue"
                           ? [formatMoney(Number(value) * 100), "Revenue"]
-                          : [Number(value).toLocaleString("en"), metric === "visitors" ? "Visitors" : "Pageviews"]
+                          : [Number(value).toLocaleString(), metric === "visitors" ? "Visitors" : "Pageviews"]
                       }
                       contentStyle={{
                         background: "var(--popover)",

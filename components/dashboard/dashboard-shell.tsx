@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useQueryParam } from "@/components/analytics/use-query-param"
 import { authClient } from "@/lib/auth-client"
 
 export interface SiteSummary {
@@ -149,7 +150,11 @@ export function AddSiteDialog({
 
 export function DashboardShell({ email, sites: initialSites }: { email: string; sites: SiteSummary[] }) {
   const [sites, setSites] = useState(initialSites)
-  const [selectedId, setSelectedId] = useState<string | null>(initialSites[0]?.id ?? null)
+  const [selectedId, setSelectedId] = useQueryParam<string>(
+    "site",
+    initialSites[0]?.id ?? "",
+    sites.map((site) => site.id),
+  )
   const [adding, setAdding] = useState(false)
 
   const selected = sites.find((site) => site.id === selectedId) ?? sites[0] ?? null

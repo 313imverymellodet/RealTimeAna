@@ -20,6 +20,9 @@ export interface Chair {
   y: number
   // Degrees to turn the chair so it faces the stage
   turn: number
+  // Where it sits on the shared circle: distance from the centre, and angle
+  radius: number
+  angle: number
 }
 
 export interface Floor {
@@ -52,7 +55,7 @@ function chairsInRow(radius: number, pitch: number): Chair[] {
     const start = (from + to) / 2 - ((count - 1) / 2) * step
     for (let i = 0; i < count; i++) {
       const angle = start + i * step
-      chairs.push({ ...point(radius, angle), turn: (-angle * 180) / Math.PI })
+      chairs.push({ ...point(radius, angle), turn: (-angle * 180) / Math.PI, radius, angle })
     }
   }
   return chairs
@@ -98,3 +101,43 @@ export function seatPeople(people: Seat[], capacity: number) {
   }
   return occupants
 }
+
+// ---------------------------------------------------------------------------
+// Walking routes: in through a door in the lobby, up the nearest aisle,
+// along the row to the seat. Leaving is the same route backwards.
+// ---------------------------------------------------------------------------
+
+// Strip below the seats where the doors and the usher are
+export const LOBBY = 74
+
+export type Facing = "up" | "right" | "down" | "left"
+
+export interface Waypoint {
+  x: number
+  y: number
+}
+
+export function doorFor(floor: Floor, side: -1 | 1): Waypoint {
+  const foot = point(LAST_ROW_RADIUS + floor.pitch, side * AISLE_AT)
+  return { x: foot.x, y: floor.height + LOBBY - 16 }
+}
+
+export function routeTo(floor: Floor, chair: Chair): Waypoint[] {
+  const side = chair.angle < 0 ? -1 : 1
+  const aisle = side * AISLE_AT
+  return [
+    doorFor(floor, side),
+    point(LAST_ROW_RADIUS + floor.pitch, aisle),
+    point(chair.radius, aisle),
+    { x: chair.x, y: chair.y },
+  ]
+}
+
+// Which way a sprite faces while walking from one point to the next
+export function facing(from: Waypoint, to: Waypoint): Facing {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  if (Math.abs(dy) >= Math.abs(dx)) return dy < 0 ? "up" : "down"
+  return dx > 0 ? "right" : "left"
+}
+

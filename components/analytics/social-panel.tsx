@@ -33,7 +33,15 @@ function Avatar({ account }: { account: AccountOverview }) {
   return account.avatarUrl ? (
     // External avatar from the network's own CDN
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={account.avatarUrl} alt="" className="size-11 shrink-0 rounded-full object-cover" />
+    <img
+      src={account.avatarUrl}
+      alt=""
+      width={44}
+      height={44}
+      loading="lazy"
+      decoding="async"
+      className="size-11 shrink-0 rounded-full object-cover"
+    />
   ) : (
     <span
       aria-hidden
