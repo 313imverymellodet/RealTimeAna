@@ -1,28 +1,27 @@
 "use client"
 
 import { useMemo, useState, type ReactNode } from "react"
-import { Area, Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { ArrowDownRight, ArrowUpRight } from "lucide-react"
 import Link from "next/link"
 import { LiveDot } from "@/components/brand"
 import { Globe } from "@/components/globe"
 import { channelColor } from "@/lib/channels"
 import { countryFlag, countryName, formatDuration, formatMoney, formatNumber, percentChange } from "@/lib/format"
 import type { BreakdownRow, RangeKey, Realtime, Stats } from "@/lib/stats"
-import { cn } from "@/lib/utils"
 import { FunnelPanel } from "./funnel-panel"
 import { HousePanel } from "./house-panel"
 import { LinkBuilder } from "./link-builder"
+import { MetricsChart } from "./metrics-chart"
 import { SocialPanel } from "./social-panel"
+import { StatTile } from "./stat-tile"
 import { StoriesPanel, TrendingPanel } from "./stories-panels"
 import { Panel, Segmented } from "./primitives"
 import { usePolling } from "./use-polling"
 import { useQueryParam } from "./use-query-param"
 import { VisitorsPanel } from "./visitors-panel"
 
-const RANGE_KEYS: RangeKey[] = ["today", "7d", "30d", "90d"]
+export const RANGE_KEYS: RangeKey[] = ["today", "7d", "30d", "90d"]
 
-const RANGE_OPTIONS: { value: RangeKey; label: string }[] = [
+export const RANGE_OPTIONS: { value: RangeKey; label: string }[] = [
   { value: "today", label: "Today" },
   { value: "7d", label: "7D" },
   { value: "30d", label: "30D" },
@@ -104,71 +103,6 @@ function BarList({
   )
 }
 
-function StatTile({
-  label,
-  value,
-  change,
-  // For bounce rate a drop is the good direction
-  invert = false,
-  loading,
-  selected,
-  onSelect,
-}: {
-  label: string
-  value: string
-  change: number | null
-  invert?: boolean
-  loading: boolean
-  selected?: boolean
-  onSelect?: () => void
-}) {
-  const good = change !== null && (invert ? change < 0 : change > 0)
-  const content = (
-    <>
-      <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-        {onSelect && <span className={cn("size-1.5 rounded-full", selected ? "bg-brand" : "bg-border")} />}
-        {label}
-      </span>
-      <span className="tabular mt-2 block text-2xl font-semibold tracking-tight">
-        {loading ? <span className="inline-block h-7 w-20 animate-pulse rounded bg-muted/60 align-middle" /> : value}
-      </span>
-      <span
-        className={cn(
-          "tabular mt-1 flex h-4 items-center gap-0.5 text-xs font-medium",
-          change === null || change === 0 ? "text-muted-foreground" : good ? "text-success" : "text-red-600",
-        )}
-      >
-        {!loading && change !== null && change !== 0 && (
-          <>
-            {change > 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
-            {Math.abs(change)}%<span className="ml-1 font-normal text-muted-foreground">vs previous</span>
-          </>
-        )}
-      </span>
-    </>
-  )
-
-  const className = cn(
-    "rounded-2xl border bg-card p-4 text-left transition-colors",
-    selected ? "border-brand/50" : "border-border",
-  )
-
-  return onSelect ? (
-    <button type="button" onClick={onSelect} aria-pressed={selected} className={cn(className, "hover:border-brand/40 focus-visible:outline-2 focus-visible:outline-ring")}>
-      {content}
-    </button>
-  ) : (
-    <div className={className}>{content}</div>
-  )
-}
-
-function formatTick(t: string, unit: Stats["unit"]) {
-  const date = new Date(t)
-  return unit === "hour"
-    ? date.toLocaleTimeString(undefined, { hour: "numeric" })
-    : date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
-}
-
 export function DashboardView({
   title,
   subtitle,
@@ -203,7 +137,6 @@ export function DashboardView({
   const { data: realtime } = usePolling<Realtime>(realtimeUrl, realtimeDelay)
 
   const online = realtime?.visitors ?? 0
-  const hasRevenue = Boolean(stats?.series.some((point) => point.revenue > 0))
   const showEmpty = Boolean(emptyState) && stats !== null && !stats.hasData
 
   return (
@@ -281,101 +214,7 @@ export function DashboardView({
           </div>
 
           <section className="rounded-3xl border border-border bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)] p-4" aria-label={`${metric} over time`}>
-            {hasRevenue && (
-              <p className="mb-2 flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-0.5 w-3 rounded bg-brand" />
-                  {metric === "visitors" ? "Visitors" : "Pageviews"}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-sm bg-revenue" />
-                  Revenue
-                </span>
-              </p>
-            )}
-            <div className="h-64 sm:h-72">
-              {stats ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={stats.series} margin={{ top: 8, right: hasRevenue ? 0 : 8, left: -16, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="metricFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="var(--brand)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="t"
-                      tickFormatter={(t: string) => formatTick(t, stats.unit)}
-                      axisLine={false}
-                      tickLine={false}
-                      minTickGap={32}
-                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                    />
-                    <YAxis
-                      yAxisId="count"
-                      allowDecimals={false}
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={(value: number) => formatNumber(value)}
-                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                    />
-                    {hasRevenue && (
-                      <YAxis
-                        yAxisId="revenue"
-                        orientation="right"
-                        axisLine={false}
-                        tickLine={false}
-                        width={48}
-                        tickFormatter={(value: number) => formatMoney(value * 100)}
-                        tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                      />
-                    )}
-                    <Tooltip
-                      cursor={{ stroke: "var(--border)" }}
-                      labelFormatter={(t) => formatTick(String(t), stats.unit)}
-                      formatter={(value, name) =>
-                        name === "revenue"
-                          ? [formatMoney(Number(value) * 100), "Revenue"]
-                          : [Number(value).toLocaleString(), metric === "visitors" ? "Visitors" : "Pageviews"]
-                      }
-                      contentStyle={{
-                        background: "var(--popover)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 12,
-                        fontSize: 12,
-                      }}
-                      labelStyle={{ color: "var(--muted-foreground)", marginBottom: 4 }}
-                      itemStyle={{ color: "var(--foreground)" }}
-                    />
-                    {hasRevenue && (
-                      <Bar
-                        yAxisId="revenue"
-                        dataKey="revenue"
-                        fill="var(--revenue)"
-                        fillOpacity={0.75}
-                        radius={[3, 3, 0, 0]}
-                        maxBarSize={18}
-                        isAnimationActive={false}
-                      />
-                    )}
-                    <Area
-                      yAxisId="count"
-                      type="monotone"
-                      dataKey={metric}
-                      stroke="var(--brand)"
-                      strokeWidth={2}
-                      fill="url(#metricFill)"
-                      dot={false}
-                      activeDot={{ r: 4, strokeWidth: 0, fill: "var(--brand)" }}
-                      isAnimationActive={false}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="size-full animate-pulse rounded-xl bg-muted/40" aria-hidden />
-              )}
-            </div>
+            <MetricsChart series={stats?.series ?? null} unit={stats?.unit ?? "day"} metric={metric} />
           </section>
 
           <div className="grid gap-3 lg:grid-cols-2">

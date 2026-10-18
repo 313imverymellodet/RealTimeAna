@@ -1,11 +1,12 @@
 "use client"
 
-import { ChevronsUpDown, Globe2, LogOut, Plus, Settings } from "lucide-react"
+import { Check, ChevronsUpDown, Globe2, Layers, LogOut, Plus, Settings } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 import { DashboardView } from "@/components/analytics/dashboard-view"
+import { OverviewView } from "@/components/analytics/overview-view"
 import { Logo } from "@/components/brand"
 import { InstallPanel } from "@/components/dashboard/install-panel"
 import { Button } from "@/components/ui/button"
@@ -148,16 +149,36 @@ export function AddSiteDialog({
   )
 }
 
-export function DashboardShell({ email, sites: initialSites }: { email: string; sites: SiteSummary[] }) {
+// The merged view of every site; offered once there is more than one to merge
+const ALL_SITES = "all"
+
+export function DashboardShell({
+  email,
+  sites: initialSites,
+  initialSiteId = null,
+}: {
+  email: string
+  sites: SiteSummary[]
+  // The ?site= the page was requested with
+  initialSiteId?: string | null
+}) {
   const [sites, setSites] = useState(initialSites)
+  const multiple = sites.length > 1
   const [selectedId, setSelectedId] = useQueryParam<string>(
     "site",
     initialSites[0]?.id ?? "",
-    sites.map((site) => site.id),
+    [...(multiple ? [ALL_SITES] : []), ...sites.map((site) => site.id)],
+    initialSiteId,
   )
   const [adding, setAdding] = useState(false)
 
-  const selected = sites.find((site) => site.id === selectedId) ?? sites[0] ?? null
+  const showAll = multiple && selectedId === ALL_SITES
+  const selected = showAll ? null : (sites.find((site) => site.id === selectedId) ?? sites[0] ?? null)
+
+  const openSite = (id: string) => {
+    setSelectedId(id)
+    window.scrollTo({ top: 0 })
+  }
 
   const handleAdded = (site: SiteSummary) => {
     setSites((current) => [site, ...current])
@@ -172,7 +193,7 @@ export function DashboardShell({ email, sites: initialSites }: { email: string; 
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <Logo href="/dashboard" />
-            {selected && (
+            {(selected || showAll) && (
               <>
                 <span className="text-border" aria-hidden>
                   /
@@ -180,16 +201,28 @@ export function DashboardShell({ email, sites: initialSites }: { email: string; 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="min-w-0 gap-1.5 px-2">
-                      <span className="truncate">{selected.domain}</span>
+                      {showAll && <Layers className="size-3.5 shrink-0 text-muted-foreground" />}
+                      <span className="truncate">{showAll ? "All sites" : selected?.domain}</span>
                       <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-64">
+                    {multiple && (
+                      <>
+                        <DropdownMenuItem onClick={() => setSelectedId(ALL_SITES)}>
+                          <Layers className="size-4" />
+                          <span className="flex-1">All sites</span>
+                          {showAll && <Check className="size-4 text-muted-foreground" />}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Websites</DropdownMenuLabel>
                     {sites.map((site) => (
                       <DropdownMenuItem key={site.id} onClick={() => setSelectedId(site.id)}>
                         <Globe2 className="size-4" />
-                        <span className="truncate">{site.domain}</span>
+                        <span className="flex-1 truncate">{site.domain}</span>
+                        {selected?.id === site.id && <Check className="size-4 text-muted-foreground" />}
                       </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
@@ -207,7 +240,9 @@ export function DashboardShell({ email, sites: initialSites }: { email: string; 
       </header>
 
       <main>
-        {selected ? (
+        {showAll ? (
+          <OverviewView onOpenSite={openSite} />
+        ) : selected ? (
           <DashboardView
             key={selected.id}
             title={selected.name}

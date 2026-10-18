@@ -139,13 +139,14 @@ export async function rows<T>(query: SQL): Promise<T[]> {
 
 // `to` is exclusive; leave it out for "up to and including right now", so a
 // visit recorded in the same instant as the query is never missed
-async function totals(siteId: string, from: SQL, to?: SQL): Promise<Totals> {
+// `scope` picks the sites, e.g. site_id = $1, or site_id in ($1, $2) for several
+export async function totals(scope: SQL, from: SQL, to?: SQL): Promise<Totals> {
   const upTo = to ? sql`and created_at < ${to}` : sql``
   const [row] = await rows<Record<string, string | null>>(sql`
     with scoped as (
       select visitor_id, session_id, duration
       from page_views
-      where site_id = ${siteId} and created_at >= ${from} ${upTo}
+      where ${scope} and created_at >= ${from} ${upTo}
     ),
     per_session as (
       select session_id, count(*) as views, sum(duration) as seconds
@@ -155,7 +156,7 @@ async function totals(siteId: string, from: SQL, to?: SQL): Promise<Totals> {
     goals as (
       select visitor_id, revenue_cents
       from events
-      where site_id = ${siteId} and created_at >= ${from} ${upTo}
+      where ${scope} and created_at >= ${from} ${upTo}
     )
     select
       (select count(distinct visitor_id) from scoped) as visitors,
@@ -258,8 +259,8 @@ export async function getStats(siteId: string, range: RangeKey, timeZone: string
     today,
     stories,
   ] = await Promise.all([
-    totals(siteId, from),
-    totals(siteId, previousFrom, from),
+    totals(sql`site_id = ${siteId}`, from),
+    totals(sql`site_id = ${siteId}`, previousFrom, from),
     rows<{ t: string; visitors: string; pageviews: string; revenue: string }>(sql`
       with buckets as (
         select generate_series(

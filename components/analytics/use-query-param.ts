@@ -17,15 +17,18 @@ function subscribe(notify: () => void) {
   }
 }
 
+// `serverValue` is the parameter as the server saw it, so the first paint
+// already shows the requested view instead of the fallback
 export function useQueryParam<T extends string>(
   name: string,
   fallback: T,
   allowed?: readonly T[],
+  serverValue: string | null = null,
 ): [T, (next: T) => void] {
   const raw = useSyncExternalStore(
     subscribe,
     () => new URLSearchParams(window.location.search).get(name),
-    () => null,
+    () => serverValue,
   )
   const value = raw !== null && (!allowed || allowed.includes(raw as T)) ? (raw as T) : fallback
 

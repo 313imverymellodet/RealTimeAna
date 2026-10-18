@@ -18,6 +18,7 @@ let modules: {
   funnels: typeof import("@/lib/funnels")
   journeys: typeof import("@/lib/journeys")
   social: typeof import("@/lib/social")
+  overview: typeof import("@/lib/overview")
 }
 
 beforeAll(async () => {
@@ -42,6 +43,7 @@ beforeAll(async () => {
     funnels: await import("@/lib/funnels"),
     journeys: await import("@/lib/journeys"),
     social: await import("@/lib/social"),
+    overview: await import("@/lib/overview"),
   }
 })
 
@@ -336,5 +338,51 @@ describe("social accounts", () => {
     } finally {
       vi.unstubAllGlobals()
     }
+  })
+})
+
+describe("all sites", () => {
+  it("merges every site's visits and revenue, and only those sites", async () => {
+    const news = await newSite()
+    const shop = await newSite()
+    const elsewhere = await newSite()
+
+    await tracker(news).view("10.1.0.1", "/")
+    await tracker(news).view("10.1.0.1", "/story")
+    await tracker(news).view("10.1.0.2", "/")
+    await tracker(news).goal("10.1.0.2", "Subscribed", 5)
+    await tracker(shop).view("10.1.0.1", "/")
+    await tracker(shop).goal("10.1.0.1", "Purchase", 12.5)
+    // Someone else's site must never leak in
+    await tracker(elsewhere).view("10.1.0.9", "/")
+
+    const pick = ({ id, name, domain }: { id: string; name: string; domain: string }) => ({ id, name, domain })
+    const overview = await modules.overview.getOverview([pick(news), pick(shop)], "today", "UTC")
+
+    // The same person on two sites is two visitors: each site counts its own
+    expect(overview.totals).toMatchObject({ visitors: 3, pageviews: 4, conversions: 2, revenueCents: 1750 })
+    expect(overview.live).toBe(3)
+
+    // One chart: the buckets add up to the totals, and each site's share adds up to the bucket
+    const sum = (key: "visitors" | "pageviews" | "revenue") =>
+      overview.series.reduce((total, point) => total + point[key], 0)
+    expect(sum("pageviews")).toBe(4)
+    expect(sum("visitors")).toBe(3)
+    expect(sum("revenue")).toBe(17.5)
+    for (const point of overview.series) {
+      const shares = Object.values(point.bySite)
+      expect(shares.reduce((total, share) => total + share.pageviews, 0)).toBe(point.pageviews)
+      expect(shares.reduce((total, share) => total + share.visitors, 0)).toBe(point.visitors)
+    }
+
+    // Busiest first, each with its own numbers
+    expect(overview.sites.map((site) => site.id)).toEqual([news.id, shop.id])
+    expect(overview.sites[0]).toMatchObject({ live: 2, totals: { visitors: 2, pageviews: 3, revenueCents: 500 } })
+    expect(overview.sites[1]).toMatchObject({ live: 1, totals: { visitors: 1, pageviews: 1, revenueCents: 1250 } })
+  })
+
+  it("is empty, not an error, for an owner with no sites", async () => {
+    const overview = await modules.overview.getOverview([], "7d", "UTC")
+    expect(overview).toMatchObject({ live: 0, series: [], sites: [], totals: { visitors: 0 } })
   })
 })

@@ -1,4 +1,4 @@
-import { ArrowRight, Bot, Cookie, Feather, Globe2, Link2, Route, Share2, Target } from "lucide-react"
+import { ArrowRight, Bot, Cookie, Feather, Globe2, Layers, Link2, Route, Share2, Target } from "lucide-react"
 import Link from "next/link"
 import { DashboardView } from "@/components/analytics/dashboard-view"
 import { LiveDot } from "@/components/brand"
@@ -57,7 +57,13 @@ const FEATURES = [
     icon: Feather,
     title: "One line to install",
     body: "A single deferred script tag, about 1.2 KB gzipped. It works on WordPress, Ghost, Webflow, Next.js and anything else that serves HTML.",
-    span: "md:col-span-3",
+    span: "md:col-span-2",
+  },
+  {
+    icon: Layers,
+    title: "Every site, one chart",
+    body: "Run more than one publication? See all their readers and revenue merged into one chart, then each site side by side.",
+    span: "",
   },
 ]
 
